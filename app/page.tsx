@@ -595,11 +595,11 @@ export default function Home() {
     syncAddressBar();
 
     setTabPull(0);
-    setActiveProjectId(null);
     setLastfmOpen(false);
     setGithubOpen(false);
     setLinkedinOpen(false);
     animateContentSwitch(() => {
+      setActiveProjectId(null);
       if (nextTab === "void") {
         setVoidText(pickRandomVoidText());
       }
