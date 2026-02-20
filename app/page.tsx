@@ -136,7 +136,7 @@ export default function Home() {
   const [activeTopTab, setActiveTopTab] = useState<"home" | "blog" | "void">("home");
   const [hoverTopTab, setHoverTopTab] = useState<"home" | "blog" | "void" | null>(null);
   const [lastIndicatorTab, setLastIndicatorTab] = useState<"home" | "blog" | "void">("home");
-  const [voidText, setVoidText] = useState(VOID_CONTENT[0]);
+  const [voidText, setVoidText] = useState<string>(VOID_CONTENT[0]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [tabPull, setTabPull] = useState(0);
   const [highlight, setHighlight] = useState<RowHighlight>({ top: 0, height: 0, opacity: 0 });
