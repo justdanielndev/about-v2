@@ -635,8 +635,8 @@ export default function Home() {
   };
 
   const activeTabIndex = tabIndex(activeTopTab);
-  const indicatorTab = hoverTopTab ?? lastIndicatorTab;
-  const indicatorVisible = hoverTopTab !== null;
+  const indicatorTab = activeProjectId ? (hoverTopTab ?? lastIndicatorTab) : activeTopTab;
+  const indicatorVisible = activeProjectId ? hoverTopTab !== null : true;
   const indicatorIndex = indicatorTab ? tabIndex(indicatorTab) : 0;
   const currentProject = activeProjectId ? projectsById[activeProjectId] : null;
   const sanitizedProjectContent = useMemo(() => {
