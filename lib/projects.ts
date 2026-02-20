@@ -33,16 +33,16 @@ export const projects: ProjectEntry[] = [
     type: "Competition",
     summary: "AI stethoscope prototype for anomaly detection in lung sounds.",
     content:
-      "soon"
+      "This 2025 my team and I participated in The Challenge, a competition aimed at creating projects that helped fulfill the purposes of the SDGs. Our project, SoundChestAI, was a digital phonendoscope that used AI to help detect possible illnesses in the respiratory system by analyzing sounds with a custom AI model built by me.<br/><br/>We were able to get a ticket to Barcelona (selected out of 3000+ participants) to present our project! It was a very nice experience to showcase our work, and we got to know lots of people that loved our project and encouraged us to keep improving the world.<br/><br/>Quite an amazing experience!"
   },
   {
-    id: "go2ods",
+    id: "goCalp",
     year: "2024",
-    name: "Go2ods Project Proposal",
+    name: "goCalp Project Proposal",
     type: "Competition",
-    summary: "soon",
+    summary: "Horizontal and vertical pop-up garden corridors, inspired by the native microbiome and flora.",
     content:
-      "soon"
+      "In 2024 I won the \"goCalp\" competition created by Global Omnium, which asked participants to find innovative solutions for cities around the world. My proposal was to create horizontal and vertical pop-up garden corridors, with native microbiome and flora, to enhance biodiversity and provide green spaces for residents and wildlife.<br/><br/>The best 2 projects competed in Calpe, and my project was awarded first price! It was even announced that my idea would be implemented in the future, which is very exciting!<br/><br/>As a side note, I might be participating in too many SDG-related competitions :D but hey I care about the world and want to help :P"
   }
 ];
 
