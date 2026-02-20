@@ -94,18 +94,12 @@ function getTimeBucketInSpain(now: Date = new Date()): keyof typeof STATUS_MESSA
   return "evening";
 }
 
-function getExpression(): string {
-  const name = resolveDisplayName({
-    hostname: window.location.hostname,
-    searchParams: new URLSearchParams(window.location.search)
-  });
-  
+function getExpression(name: string): string {
   if (name.toLowerCase() === DEFAULT_TRUENAME.toLowerCase()) {
     return ":3";
   }
-  
-  return ":D";
 
+  return ":D";
 }
 
 
@@ -871,7 +865,7 @@ export default function Home() {
           ) : activeTopTab === "home" ? (
             <>
               <section className="site-bio">
-            <p>Hey {getExpression()} I'm <span className={getExpression() == ":3" ? "display-name-real" : "display-name-default"}>{displayName}</span>! I'm a director, writer, developer... Overall, I make projects that are designed improve people's lives.</p>
+            <p>Hey {getExpression(displayName)} I'm <span className={getExpression(displayName) === ":3" ? "display-name-real" : "display-name-default"}>{displayName}</span>! I'm a director, writer, developer... Overall, I make projects that are designed improve people's lives.</p>
             <p>
               The "coolest" part of what I do? I'm the founder and director of{" "}
               <a

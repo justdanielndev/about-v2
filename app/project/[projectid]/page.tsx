@@ -2,15 +2,16 @@ import { redirect } from "next/navigation";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-export default function ProjectRedirectPage({
+export default async function ProjectRedirectPage({
   params,
   searchParams
 }: {
-  params: { projectid: string };
-  searchParams?: SearchParams;
+  params: Promise<{ projectid: string }>;
+  searchParams?: Promise<SearchParams>;
 }) {
   const query = new URLSearchParams();
-  const resolvedSearch = searchParams ?? {};
+  const resolvedParams = await params;
+  const resolvedSearch = (await searchParams) ?? {};
 
   for (const [key, value] of Object.entries(resolvedSearch)) {
     if (key === "project" || key === "tab") {
@@ -25,7 +26,6 @@ export default function ProjectRedirectPage({
     }
   }
 
-  query.set("project", params.projectid);
+  query.set("project", resolvedParams.projectid);
   redirect(`/?${query.toString()}`);
 }
-
