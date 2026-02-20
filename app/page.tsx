@@ -158,6 +158,9 @@ export default function Home() {
   const githubTriggerRef = useRef<HTMLAnchorElement | null>(null);
   const githubCloseTimer = useRef<number | null>(null);
   const tabTransitionRef = useRef<number | null>(null);
+  const emailTooltipTimer = useRef<number | null>(null);
+  const [emailTooltipText, setEmailTooltipText] = useState("click to copy");
+  const [emailTooltipVisible, setEmailTooltipVisible] = useState(false);
 
   const parseLocationState = () => {
     const currentUrl = new URL(window.location.href);
@@ -226,6 +229,9 @@ export default function Home() {
     return () => {
       if (tabTransitionRef.current !== null) {
         window.clearTimeout(tabTransitionRef.current);
+      }
+      if (emailTooltipTimer.current !== null) {
+        window.clearTimeout(emailTooltipTimer.current);
       }
     };
   }, []);
@@ -476,6 +482,64 @@ export default function Home() {
     githubCloseTimer.current = window.setTimeout(() => {
       setGithubOpen(false);
     }, 90);
+  };
+
+  const emailAddress =
+    displayName.toLowerCase() === DEFAULT_TRUENAME.toLowerCase() ? "zoe@negrenavarro.me" : "daniel@negrenavarro.me";
+
+  const resetEmailTooltip = () => {
+    setEmailTooltipText("click to copy");
+  };
+
+  const showEmailTooltip = () => {
+    if (emailTooltipTimer.current !== null) {
+      window.clearTimeout(emailTooltipTimer.current);
+      emailTooltipTimer.current = null;
+    }
+    setEmailTooltipVisible(true);
+  };
+
+  const hideEmailTooltip = () => {
+    setEmailTooltipVisible(false);
+    if (emailTooltipTimer.current !== null) {
+      window.clearTimeout(emailTooltipTimer.current);
+    }
+    emailTooltipTimer.current = window.setTimeout(() => {
+      setEmailTooltipText("click to copy");
+    }, 160);
+  };
+
+  const handleCopyEmail = async () => {
+    const fallbackCopy = () => {
+      const textarea = document.createElement("textarea");
+      textarea.value = emailAddress;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      return copied;
+    };
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(emailAddress);
+      } else {
+        const copied = fallbackCopy();
+        if (!copied) {
+          throw new Error("Fallback copy failed");
+        }
+      }
+      setEmailTooltipText("copied");
+    } catch {
+      const copied = fallbackCopy();
+      setEmailTooltipText(copied ? "copied" : "copy failed");
+    }
+
   };
 
   const animateContentSwitch = (updater: () => void) => {
@@ -882,9 +946,24 @@ export default function Home() {
               </span>
               , or{" "}
               <span className="inline-tooltip-wrapper">
-                <a href={getExpression() === ":3" ? "mailto:zoe@negrenavarro.me" : "mailto:daniel@negrenavarro.me"}>
+                <button
+                  type="button"
+                  className="email-copy-button"
+                  onClick={handleCopyEmail}
+                  onMouseEnter={showEmailTooltip}
+                  onMouseLeave={hideEmailTooltip}
+                  onFocus={showEmailTooltip}
+                  onBlur={hideEmailTooltip}
+                >
                   <span style={{ pointerEvents: "none" }}>write me an email</span>
-                </a>
+                </button>
+                <span
+                  className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {emailTooltipText}
+                </span>
               </span>!
             </div>
               </section>

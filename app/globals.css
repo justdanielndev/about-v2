@@ -242,7 +242,8 @@ html[data-display-name="Zoe"] {
   margin-bottom: 0;
 }
 
-.site-bio a {
+.site-bio a,
+.site-bio .email-copy-button {
   color: var(--othercolor);
   text-decoration: underline;
   text-decoration-color: var(--border);
@@ -251,14 +252,26 @@ html[data-display-name="Zoe"] {
   position: relative;
 }
 
-.site-bio a::before {
+.site-bio .email-copy-button {
+  font: inherit;
+  line-height: inherit;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.site-bio a::before,
+.site-bio .email-copy-button::before {
   content: "";
   position: absolute;
   inset: -8px -4px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .site-bio a:hover {
+  .site-bio a:hover,
+  .site-bio .email-copy-button:hover {
     color: #fff;
     text-decoration-color: #fff;
   }
@@ -273,6 +286,29 @@ html[data-display-name="Zoe"] {
   align-items: center;
   justify-content: center;
   position: relative;
+}
+
+.inline-copy-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(2px) scale(0.96);
+  padding: 0.24rem 0.45rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg-accent);
+  font-size: 0.68rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 140ms ease, transform 140ms ease, background-color 260ms var(--ease-smooth), border-color 260ms var(--ease-smooth), color 260ms var(--ease-smooth);
+}
+
+.inline-copy-tooltip-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
 .cloneProjectHighlight {
