@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import BuildMetaFooter from "@/components/build-meta-footer";
 import LayoutNameSync from "@/components/layout-name-sync";
 import { buildSiteTitle, DEFAULT_NAME, DEFAULT_TRUENAME, getDefaultName, TRUENAME_DOMAINS } from "@/lib/name-resolution";
 import "./globals.css";
@@ -21,7 +22,10 @@ export default function RootLayout({
       <body>
         <script dangerouslySetInnerHTML={{ __html: earlyNameScript }} />
         <LayoutNameSync />
-        {children}
+        <div className="site-root">
+          <div className="site-root-content">{children}</div>
+          <BuildMetaFooter />
+        </div>
       </body>
     </html>
   );

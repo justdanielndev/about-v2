@@ -27,6 +27,10 @@ type GithubData = {
   profileUrl: string;
   avatarUrl: string | null;
   contributionsUrl: string;
+  repoUrl: string;
+  latestCommitNumber: number | null;
+  latestCommitSha: string | null;
+  latestCommitAt: string | null;
 };
 
 const hiddenStyle = "cloneReveal cloneHidden";
@@ -34,6 +38,7 @@ const shownStyle = "cloneReveal cloneShown";
 const LASTFM_USER = "pluralzoe";
 const LINKEDIN_URL = "https://www.linkedin.com/in/daniel-negre/";
 const GITHUB_USER = "justdanielndev";
+const GITHUB_REPO = "about-v2";
 
 const STATUS_MESSAGES = {
   lateNight: [
@@ -102,6 +107,28 @@ function getExpression(name: string): string {
   return ":D";
 }
 
+function formatLastPlayedLabel(timestamp: number): string {
+  const elapsedSeconds = Math.floor((Date.now() - timestamp * 1000) / 1000);
+  if (elapsedSeconds < 60) {
+    return "Last played just now";
+  }
+
+  const units = [
+    { label: "day", seconds: 86_400 },
+    { label: "hour", seconds: 3_600 },
+    { label: "minute", seconds: 60 }
+  ] as const;
+
+  for (const unit of units) {
+    if (elapsedSeconds >= unit.seconds) {
+      const value = Math.floor(elapsedSeconds / unit.seconds);
+      return `Last played ${value} ${unit.label}${value === 1 ? "" : "s"} ago`;
+    }
+  }
+
+  return "Last played just now";
+}
+
 
 
 function getRandomStatusLine(): string {
@@ -155,6 +182,8 @@ export default function Home() {
   const emailTooltipTimer = useRef<number | null>(null);
   const [emailTooltipText, setEmailTooltipText] = useState("click to copy");
   const [emailTooltipVisible, setEmailTooltipVisible] = useState(false);
+  const isZoePage = displayName.toLowerCase() === DEFAULT_TRUENAME.toLowerCase();
+  const linkedinHoverEnabled = !isZoePage;
 
   const parseLocationState = () => {
     const currentUrl = new URL(window.location.href);
@@ -251,7 +280,7 @@ export default function Home() {
 
     const loadGithub = async () => {
       try {
-        const response = await fetch(`/api/github?user=${encodeURIComponent(GITHUB_USER)}`);
+        const response = await fetch(`/api/github?user=${encodeURIComponent(GITHUB_USER)}&repo=${encodeURIComponent(GITHUB_REPO)}`);
         if (!response.ok) {
           return;
         }
@@ -323,7 +352,7 @@ export default function Home() {
   }, [lastfmOpen]);
 
   useEffect(() => {
-    if (!linkedinOpen) {
+    if (!linkedinOpen || !linkedinHoverEnabled) {
       return;
     }
 
@@ -344,7 +373,13 @@ export default function Home() {
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [linkedinOpen]);
+  }, [linkedinOpen, linkedinHoverEnabled]);
+
+  useEffect(() => {
+    if (!linkedinHoverEnabled) {
+      setLinkedinOpen(false);
+    }
+  }, [linkedinHoverEnabled]);
 
   useEffect(() => {
     if (!githubOpen) {
@@ -429,6 +464,10 @@ export default function Home() {
   };
 
   const openLinkedin = () => {
+    if (!linkedinHoverEnabled) {
+      return;
+    }
+
     if (linkedinCloseTimer.current !== null) {
       window.clearTimeout(linkedinCloseTimer.current);
       linkedinCloseTimer.current = null;
@@ -444,6 +483,11 @@ export default function Home() {
   };
 
   const closeLinkedin = () => {
+    if (!linkedinHoverEnabled) {
+      setLinkedinOpen(false);
+      return;
+    }
+
     if (linkedinCloseTimer.current !== null) {
       window.clearTimeout(linkedinCloseTimer.current);
     }
@@ -923,42 +967,71 @@ export default function Home() {
               !
             </p>
             <div className="site-bio-line">
-              Want to contact/work with me? DM me on{" "}
-              <span>
-                <a
-                  ref={linkedinTriggerRef}
-                  href={LINKEDIN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onMouseEnter={openLinkedin}
-                  onMouseLeave={closeLinkedin}
-                  onFocus={openLinkedin}
-                  onBlur={closeLinkedin}
-                >
-                  <span style={{ pointerEvents: "none" }}>LinkedIn</span>
-                </a>
-              </span>
-              , or{" "}
-              <span className="inline-tooltip-wrapper">
-                <button
-                  type="button"
-                  className="email-copy-button"
-                  onClick={handleCopyEmail}
-                  onMouseEnter={showEmailTooltip}
-                  onMouseLeave={hideEmailTooltip}
-                  onFocus={showEmailTooltip}
-                  onBlur={hideEmailTooltip}
-                >
-                  <span style={{ pointerEvents: "none" }}>write me an email</span>
-                </button>
-                <span
-                  className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  {emailTooltipText}
-                </span>
-              </span>!
+              {isZoePage ? (
+                <>
+                Want to contact/work with me?{" "}
+                <span className="inline-tooltip-wrapper">
+                    <button
+                      type="button"
+                      className="email-copy-button"
+                      onClick={handleCopyEmail}
+                      onMouseEnter={showEmailTooltip}
+                      onMouseLeave={hideEmailTooltip}
+                      onFocus={showEmailTooltip}
+                      onBlur={hideEmailTooltip}
+                    >
+                      <span style={{ pointerEvents: "none" }}>write me an email</span>
+                    </button>
+                    <span
+                      className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {emailTooltipText}
+                    </span>
+                  </span>!
+                </>
+              ) : (
+                <>
+                  Want to contact/work with me? DM me on{" "}
+                  <span>
+                    <a
+                      ref={linkedinTriggerRef}
+                      href={LINKEDIN_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onMouseEnter={linkedinHoverEnabled ? openLinkedin : undefined}
+                      onMouseLeave={linkedinHoverEnabled ? closeLinkedin : undefined}
+                      onFocus={linkedinHoverEnabled ? openLinkedin : undefined}
+                      onBlur={linkedinHoverEnabled ? closeLinkedin : undefined}
+                    >
+                      <span style={{ pointerEvents: "none" }}>LinkedIn</span>
+                    </a>
+                  </span>
+                  , or{" "}
+                  <span className="inline-tooltip-wrapper">
+                    <button
+                      type="button"
+                      className="email-copy-button"
+                      onClick={handleCopyEmail}
+                      onMouseEnter={showEmailTooltip}
+                      onMouseLeave={hideEmailTooltip}
+                      onFocus={showEmailTooltip}
+                      onBlur={hideEmailTooltip}
+                    >
+                      <span style={{ pointerEvents: "none" }}>write me an email</span>
+                    </button>
+                    <span
+                      className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {emailTooltipText}
+                    </span>
+                  </span>
+                  !
+                </>
+              )}
             </div>
               </section>
 
@@ -1006,7 +1079,7 @@ export default function Home() {
               {lastfm?.nowPlaying
                 ? "Now playing"
                 : lastfm?.timestamp
-                  ? `Last played ${new Date(lastfm.timestamp * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                  ? formatLastPlayedLabel(lastfm.timestamp)
                   : "Open profile"}
             </p>
           </div>
@@ -1039,29 +1112,31 @@ export default function Home() {
         </a>
       </div>
 
-      <div
-        role="dialog"
-        aria-label="LinkedIn preview"
-        className={`linkedin-preview-card-float ${linkedinOpen ? "linkedin-preview-card-float-open" : ""}`}
-        style={{ top: `${linkedinPos.top}px`, left: `${linkedinPos.left}px` }}
-        onMouseEnter={openLinkedin}
-        onMouseLeave={closeLinkedin}
-      >
-        <a
-          href={LINKEDIN_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cloneLastfmCard cloneLinkedinCard"
-          aria-label={`Open LinkedIn profile for ${displayName}`}
+      {linkedinHoverEnabled ? (
+        <div
+          role="dialog"
+          aria-label="LinkedIn preview"
+          className={`linkedin-preview-card-float ${linkedinOpen ? "linkedin-preview-card-float-open" : ""}`}
+          style={{ top: `${linkedinPos.top}px`, left: `${linkedinPos.left}px` }}
+          onMouseEnter={openLinkedin}
+          onMouseLeave={closeLinkedin}
         >
-          <img className="cloneLinkedinAvatar" src="/linkedin.png" alt="" loading="lazy" />
-          <div className="previewInfo">
-            <p className="previewTitle">LinkedIn</p>
-            <p className="previewMeta">Founder @ Nix Entertainment | Media Production</p>
-            <p className="previewHint">Director and founder at Nix Entertainment, Hack Club contributor, and...</p>
-          </div>
-        </a>
-      </div>
+          <a
+            href={LINKEDIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cloneLastfmCard cloneLinkedinCard"
+            aria-label={`Open LinkedIn profile for ${displayName}`}
+          >
+            <img className="cloneLinkedinAvatar" src="/linkedin.png" alt="" loading="lazy" />
+            <div className="previewInfo">
+              <p className="previewTitle">LinkedIn</p>
+              <p className="previewMeta">Founder @ Nix Entertainment | Media Production</p>
+              <p className="previewHint">Director and founder at Nix Entertainment, Hack Club contributor, and...</p>
+            </div>
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }
