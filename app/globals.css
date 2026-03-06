@@ -94,10 +94,6 @@ body {
   transition: background-color 300ms var(--ease-smooth);
 }
 
-html[data-display-name="Zoe"] {
-  --othercolor: var(--realcolor) !important;
-}
-
 .shared-module__q8HX2G__baseTypography {
   font-size: 1.08rem !important;
   line-height: 1.45;
@@ -257,12 +253,6 @@ html[data-display-name="Zoe"] {
 
 .display-name-default {
   color: var(--othercolor);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-tight);
-}
-
-.display-name-real {
-  color: var(--realcolor);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-tight);
 }

@@ -8,6 +8,7 @@ import TableOfContents from "../_components/table-of-contents";
 import BlogPostAnalytics from "../_components/blog-post-analytics";
 import styles from "../blog.module.css";
 import { getBlogPostBySlug, getBlogPostSlugs } from "@/lib/blog";
+import { toCanonicalUrl } from "@/lib/seo";
 
 type Params = {
   slug: string;
@@ -51,6 +52,9 @@ export async function generateMetadata({
   return {
     title: `${post.frontmatter.title} | Blog`,
     description: post.frontmatter.description,
+    alternates: {
+      canonical: `/blog/${post.slug}`
+    },
     openGraph: {
       title: post.frontmatter.title,
       description: post.frontmatter.description,
@@ -77,9 +81,26 @@ export default async function BlogPostPage({
   }
 
   let paragraphIndex = 0;
+  const canonicalUrl = toCanonicalUrl(`/blog/${post.slug}`);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${canonicalUrl}#blogpost`,
+    headline: post.frontmatter.title,
+    description: post.frontmatter.description,
+    datePublished: post.frontmatter.publishedAt,
+    dateModified: post.frontmatter.updatedAt,
+    author: {
+      "@type": "Person",
+      name: post.frontmatter.author
+    },
+    mainEntityOfPage: canonicalUrl,
+    url: canonicalUrl
+  };
 
   return (
     <div className={styles.container} data-align="right">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <BlogPostAnalytics
         slug={post.slug}
         title={post.frontmatter.title}

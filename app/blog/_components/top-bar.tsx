@@ -1,6 +1,6 @@
 "use client";
 
-import { getDefaultName, resolveDisplayName } from "@/lib/name-resolution";
+import { getDefaultName } from "@/lib/name-resolution";
 import SiteTopBar from "@/components/site-top-bar";
 import { usePathname, useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
@@ -68,7 +68,7 @@ export default function TopBar({ active }: TopBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const hasInternalNav = typeof window !== "undefined" && window.sessionStorage.getItem(INTERNAL_NAV_KEY) !== null;
-  const [displayName, setDisplayName] = useState(getDefaultName());
+  const displayName = getDefaultName();
   const [topBarVisible, setTopBarVisible] = useState(hasInternalNav);
   const [topBarNoTransition, setTopBarNoTransition] = useState(hasInternalNav);
   const [statusText, setStatusText] = useState(" ");
@@ -76,14 +76,6 @@ export default function TopBar({ active }: TopBarProps) {
   const [navigatingTab, setNavigatingTab] = useState<"home" | "blog" | "void" | null>(null);
   const [tabPull, setTabPull] = useState(0);
   const navTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const resolved = resolveDisplayName({
-      hostname: window.location.hostname,
-      searchParams: new URLSearchParams(window.location.search)
-    });
-    setDisplayName(resolved);
-  }, []);
 
   useEffect(() => {
     const storageKey = "site-status-line";

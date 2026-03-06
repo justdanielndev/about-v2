@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_TRUENAME, getDefaultName, resolveDisplayName } from "@/lib/name-resolution";
+import { getDefaultName } from "@/lib/name-resolution";
 import { projects, projectsById } from "@/lib/projects";
 import { sanitizeProjectHtml } from "@/lib/sanitize-html";
 import SiteTopBar from "@/components/site-top-bar";
@@ -103,11 +103,7 @@ function getTimeBucketInSpain(now: Date = new Date()): keyof typeof STATUS_MESSA
   return "evening";
 }
 
-function getExpression(name: string): string {
-  if (name.toLowerCase() === DEFAULT_TRUENAME.toLowerCase()) {
-    return ":3";
-  }
-
+function getExpression(): string {
   return ":D";
 }
 
@@ -178,7 +174,7 @@ export default function Home() {
   const [contentVisible, setContentVisible] = useState(false);
   const [isRoutingToBlog, setIsRoutingToBlog] = useState(false);
   const [isTouchOnly, setIsTouchOnly] = useState(false);
-  const [displayName, setDisplayName] = useState(getDefaultName());
+  const displayName = getDefaultName();
   const [statusText, setStatusText] = useState(" ");
   const [activeTopTab, setActiveTopTab] = useState<"home" | "blog" | "void">(initialTopTab);
   const [hoverTopTab, setHoverTopTab] = useState<"home" | "blog" | "void" | null>(null);
@@ -208,8 +204,6 @@ export default function Home() {
   const emailTooltipTimer = useRef<number | null>(null);
   const [emailTooltipText, setEmailTooltipText] = useState("click to copy");
   const [emailTooltipVisible, setEmailTooltipVisible] = useState(false);
-  const isZoePage = displayName.toLowerCase() === DEFAULT_TRUENAME.toLowerCase();
-  const linkedinHoverEnabled = !isZoePage;
 
   const parseLocationState = () => {
     const currentUrl = new URL(window.location.href);
@@ -259,12 +253,6 @@ export default function Home() {
       window.history.scrollRestoration = "manual";
     }
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-
-    const resolved = resolveDisplayName({
-      hostname: window.location.hostname,
-      searchParams: new URLSearchParams(window.location.search)
-    });
-    setDisplayName(resolved);
 
     const internalNav = window.sessionStorage.getItem(INTERNAL_NAV_KEY);
     if (internalNav) {
@@ -434,7 +422,7 @@ export default function Home() {
   }, [lastfmOpen]);
 
   useEffect(() => {
-    if (!linkedinOpen || !linkedinHoverEnabled) {
+    if (!linkedinOpen) {
       return;
     }
 
@@ -455,13 +443,7 @@ export default function Home() {
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [linkedinOpen, linkedinHoverEnabled]);
-
-  useEffect(() => {
-    if (!linkedinHoverEnabled) {
-      setLinkedinOpen(false);
-    }
-  }, [linkedinHoverEnabled]);
+  }, [linkedinOpen]);
 
   useEffect(() => {
     if (!githubOpen) {
@@ -546,10 +528,6 @@ export default function Home() {
   };
 
   const openLinkedin = () => {
-    if (!linkedinHoverEnabled) {
-      return;
-    }
-
     if (linkedinCloseTimer.current !== null) {
       window.clearTimeout(linkedinCloseTimer.current);
       linkedinCloseTimer.current = null;
@@ -565,11 +543,6 @@ export default function Home() {
   };
 
   const closeLinkedin = () => {
-    if (!linkedinHoverEnabled) {
-      setLinkedinOpen(false);
-      return;
-    }
-
     if (linkedinCloseTimer.current !== null) {
       window.clearTimeout(linkedinCloseTimer.current);
     }
@@ -604,8 +577,7 @@ export default function Home() {
     }, 90);
   };
 
-  const emailAddress =
-    displayName.toLowerCase() === DEFAULT_TRUENAME.toLowerCase() ? "zoe@negrenavarro.me" : "daniel@negrenavarro.me";
+  const emailAddress = "daniel@negrenavarro.me";
 
   const resetEmailTooltip = () => {
     setEmailTooltipText("click to copy");
@@ -996,7 +968,7 @@ export default function Home() {
           ) : activeTopTab === "home" ? (
             <>
               <section className="site-bio">
-            <p>Hey {getExpression(displayName)} I'm <span className={getExpression(displayName) === ":3" ? "display-name-real" : "display-name-default"}>{displayName}</span>! I'm a director, writer, developer... Overall, I make projects that are designed improve people's lives.</p>
+            <p>Hey {getExpression()} I'm <span className="display-name-default">{displayName}</span>! I'm a director, writer, developer... Overall, I make projects that are designed improve people's lives.</p>
             <p>
               The "coolest" part of what I do? I'm the founder and director of{" "}
               <a
@@ -1054,71 +1026,43 @@ export default function Home() {
               !
             </p>
             <div className="site-bio-line">
-              {isZoePage ? (
-                <>
-                Want to contact/work with me?{" "}
-                <span className="inline-tooltip-wrapper">
-                    <button
-                      type="button"
-                      className="email-copy-button"
-                      onClick={handleCopyEmail}
-                      onMouseEnter={showEmailTooltip}
-                      onMouseLeave={hideEmailTooltip}
-                      onFocus={showEmailTooltip}
-                      onBlur={hideEmailTooltip}
-                    >
-                      <span style={{ pointerEvents: "none" }}>write me an email</span>
-                    </button>
-                    <span
-                      className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
-                      role="status"
-                      aria-live="polite"
-                    >
-                      {emailTooltipText}
-                    </span>
-                  </span>!
-                </>
-              ) : (
-                <>
-                  Want to contact/work with me? DM me on{" "}
-                  <span>
-                    <a
-                      ref={linkedinTriggerRef}
-                      href={LINKEDIN_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onMouseEnter={linkedinHoverEnabled ? openLinkedin : undefined}
-                      onMouseLeave={linkedinHoverEnabled ? closeLinkedin : undefined}
-                      onFocus={linkedinHoverEnabled ? openLinkedin : undefined}
-                      onBlur={linkedinHoverEnabled ? closeLinkedin : undefined}
-                    >
-                      <span style={{ pointerEvents: "none" }}>LinkedIn</span>
-                    </a>
-                  </span>
-                  , or{" "}
-                  <span className="inline-tooltip-wrapper">
-                    <button
-                      type="button"
-                      className="email-copy-button"
-                      onClick={handleCopyEmail}
-                      onMouseEnter={showEmailTooltip}
-                      onMouseLeave={hideEmailTooltip}
-                      onFocus={showEmailTooltip}
-                      onBlur={hideEmailTooltip}
-                    >
-                      <span style={{ pointerEvents: "none" }}>write me an email</span>
-                    </button>
-                    <span
-                      className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
-                      role="status"
-                      aria-live="polite"
-                    >
-                      {emailTooltipText}
-                    </span>
-                  </span>
-                  !
-                </>
-              )}
+              Want to contact/work with me? DM me on{" "}
+              <span>
+                <a
+                  ref={linkedinTriggerRef}
+                  href={LINKEDIN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onMouseEnter={openLinkedin}
+                  onMouseLeave={closeLinkedin}
+                  onFocus={openLinkedin}
+                  onBlur={closeLinkedin}
+                >
+                  <span style={{ pointerEvents: "none" }}>LinkedIn</span>
+                </a>
+              </span>
+              , or{" "}
+              <span className="inline-tooltip-wrapper">
+                <button
+                  type="button"
+                  className="email-copy-button"
+                  onClick={handleCopyEmail}
+                  onMouseEnter={showEmailTooltip}
+                  onMouseLeave={hideEmailTooltip}
+                  onFocus={showEmailTooltip}
+                  onBlur={hideEmailTooltip}
+                >
+                  <span style={{ pointerEvents: "none" }}>write me an email</span>
+                </button>
+                <span
+                  className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {emailTooltipText}
+                </span>
+              </span>
+              !
             </div>
               </section>
 
@@ -1198,31 +1142,29 @@ export default function Home() {
         </a>
       </div>
 
-      {linkedinHoverEnabled ? (
-        <div
-          role="dialog"
-          aria-label="LinkedIn preview"
-          className={`linkedin-preview-card-float ${linkedinOpen ? "linkedin-preview-card-float-open" : ""}`}
-          style={{ top: `${linkedinPos.top}px`, left: `${linkedinPos.left}px` }}
-          onMouseEnter={openLinkedin}
-          onMouseLeave={closeLinkedin}
+      <div
+        role="dialog"
+        aria-label="LinkedIn preview"
+        className={`linkedin-preview-card-float ${linkedinOpen ? "linkedin-preview-card-float-open" : ""}`}
+        style={{ top: `${linkedinPos.top}px`, left: `${linkedinPos.left}px` }}
+        onMouseEnter={openLinkedin}
+        onMouseLeave={closeLinkedin}
+      >
+        <a
+          href={LINKEDIN_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cloneLastfmCard cloneLinkedinCard"
+          aria-label={`Open LinkedIn profile for ${displayName}`}
         >
-          <a
-            href={LINKEDIN_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="cloneLastfmCard cloneLinkedinCard"
-            aria-label={`Open LinkedIn profile for ${displayName}`}
-          >
-            <img className="cloneLinkedinAvatar" src="/linkedin.png" alt="" loading="lazy" />
-            <div className="previewInfo">
-              <p className="previewTitle">LinkedIn</p>
-              <p className="previewMeta">Founder @ Nix Entertainment | Media Production</p>
-              <p className="previewHint">Director and founder at Nix Entertainment, Hack Club contributor, and...</p>
-            </div>
-          </a>
-        </div>
-      ) : null}
+          <img className="cloneLinkedinAvatar" src="/linkedin.png" alt="" loading="lazy" />
+          <div className="previewInfo">
+            <p className="previewTitle">LinkedIn</p>
+            <p className="previewMeta">Founder @ Nix Entertainment | Media Production</p>
+            <p className="previewHint">Director and founder at Nix Entertainment, Hack Club contributor, and...</p>
+          </div>
+        </a>
+      </div>
     </div>
   );
 }
