@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 type BuildMetaData = {
+  repoUrl: string;
   latestCommitNumber: number | null;
   latestCommitSha: string | null;
   latestCommitAt: string | null;
@@ -67,12 +68,24 @@ export default function BuildMetaFooter() {
         ? `Commit ${meta.latestCommitSha}`
         : "Commit unknown";
 
-    return `${commitLabel} - Updated ${formatTimestampLabel(meta?.latestCommitAt ?? null)}`;
+    const commitUrl = meta?.latestCommitSha
+      ? `${meta.repoUrl}/commit/${meta.latestCommitSha}`
+      : `${meta?.repoUrl ?? `https://github.com/${encodeURIComponent(GITHUB_USER)}/${encodeURIComponent(GITHUB_REPO)}`}/commits`;
+
+    return {
+      commitLabel,
+      commitUrl,
+      updatedLabel: `Updated ${formatTimestampLabel(meta?.latestCommitAt ?? null)}`
+    };
   }, [meta]);
 
   return (
     <footer className="site-build-meta" aria-label="Build info">
-      {buildMetaLabel}
+      <a href={buildMetaLabel.commitUrl} target="_blank" rel="noopener noreferrer" className="site-build-meta-link">
+        {buildMetaLabel.commitLabel}
+      </a>
+      {" - "}
+      <span>{buildMetaLabel.updatedLabel}</span>
     </footer>
   );
 }

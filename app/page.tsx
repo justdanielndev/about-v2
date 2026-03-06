@@ -3,6 +3,8 @@
 import { DEFAULT_TRUENAME, getDefaultName, resolveDisplayName } from "@/lib/name-resolution";
 import { projects, projectsById } from "@/lib/projects";
 import { sanitizeProjectHtml } from "@/lib/sanitize-html";
+import SiteTopBar from "@/components/site-top-bar";
+import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -39,6 +41,8 @@ const LASTFM_USER = "pluralzoe";
 const LINKEDIN_URL = "https://www.linkedin.com/in/daniel-negre/";
 const GITHUB_USER = "justdanielndev";
 const GITHUB_REPO = "about-v2";
+const ROUTE_NAV_DELAY_MS = 220;
+const INTERNAL_NAV_KEY = "site-internal-nav";
 
 const STATUS_MESSAGES = {
   lateNight: [
@@ -148,15 +152,37 @@ function getTitleForTab(name: string, tab: "home" | "blog" | "void"): string {
   return `${name} (Portfolio)`;
 }
 
+function getInitialTopTab(): "home" | "blog" | "void" {
+  if (typeof window === "undefined") {
+    return "home";
+  }
+
+  const fromBlogNav = window.sessionStorage.getItem("from-blog-nav");
+  if (fromBlogNav === "home" || fromBlogNav === "void") {
+    return fromBlogNav;
+  }
+
+  const tabParam = new URLSearchParams(window.location.search).get("tab");
+  if (tabParam === "home" || tabParam === "blog" || tabParam === "void") {
+    return tabParam;
+  }
+
+  return "home";
+}
+
 export default function Home() {
-  const [visible, setVisible] = useState(false);
+  const initialTopTab = getInitialTopTab();
+  const router = useRouter();
+  const [topBarVisible, setTopBarVisible] = useState(false);
+  const [topBarNoTransition, setTopBarNoTransition] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
+  const [isRoutingToBlog, setIsRoutingToBlog] = useState(false);
   const [isTouchOnly, setIsTouchOnly] = useState(false);
   const [displayName, setDisplayName] = useState(getDefaultName());
   const [statusText, setStatusText] = useState(" ");
-  const [activeTopTab, setActiveTopTab] = useState<"home" | "blog" | "void">("home");
+  const [activeTopTab, setActiveTopTab] = useState<"home" | "blog" | "void">(initialTopTab);
   const [hoverTopTab, setHoverTopTab] = useState<"home" | "blog" | "void" | null>(null);
-  const [lastIndicatorTab, setLastIndicatorTab] = useState<"home" | "blog" | "void">("home");
+  const [lastIndicatorTab, setLastIndicatorTab] = useState<"home" | "blog" | "void">(initialTopTab);
   const [voidText, setVoidText] = useState<string>(VOID_CONTENT[0]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [tabPull, setTabPull] = useState(0);
@@ -218,7 +244,17 @@ export default function Home() {
     return { tab, projectId };
   };
 
+  const navigateWithTransition = (href: string, mode: "push" | "replace" = "push") => {
+    if (mode === "replace") {
+      router.replace(href);
+      return;
+    }
+    router.push(href);
+  };
+
   useEffect(() => {
+    let topBarFrame: number | null = null;
+
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
@@ -230,20 +266,66 @@ export default function Home() {
     });
     setDisplayName(resolved);
 
+    const internalNav = window.sessionStorage.getItem(INTERNAL_NAV_KEY);
+    if (internalNav) {
+      window.sessionStorage.removeItem(INTERNAL_NAV_KEY);
+      setTopBarNoTransition(true);
+      setTopBarVisible(true);
+    } else {
+      topBarFrame = window.requestAnimationFrame(() => {
+        setTopBarNoTransition(false);
+        setTopBarVisible(true);
+      });
+    }
+
     const initialState = parseLocationState();
+    if (!initialState.projectId && initialState.tab === "blog") {
+      const currentUrl = new URL(window.location.href);
+      const params = new URLSearchParams(currentUrl.search);
+      params.delete("tab");
+      params.delete("project");
+      const query = params.toString();
+      navigateWithTransition(`/blog${query ? `?${query}` : ""}`, "replace");
+      return;
+    }
+
     setActiveTopTab(initialState.tab);
     setActiveProjectId(initialState.projectId);
     if (initialState.tab === "void") {
       setVoidText(pickRandomVoidText());
     }
 
-    setStatusText(getRandomStatusLine());
+    const storageKey = "site-status-line";
+    const existingStatus = window.sessionStorage.getItem(storageKey);
+    if (existingStatus) {
+      setStatusText(existingStatus);
+    } else {
+      const generated = getRandomStatusLine();
+      window.sessionStorage.setItem(storageKey, generated);
+      setStatusText(generated);
+    }
+
+    const fromBlogNav = window.sessionStorage.getItem("from-blog-nav");
+    if (fromBlogNav) {
+      window.sessionStorage.removeItem("from-blog-nav");
+      const frame = window.requestAnimationFrame(() => {
+        setContentVisible(true);
+      });
+      return () => {
+        if (topBarFrame !== null) {
+          window.cancelAnimationFrame(topBarFrame);
+        }
+        window.cancelAnimationFrame(frame);
+      };
+    }
 
     const timer = window.setTimeout(() => {
-      setVisible(true);
       setContentVisible(true);
     }, 30);
     return () => {
+      if (topBarFrame !== null) {
+        window.cancelAnimationFrame(topBarFrame);
+      }
       window.clearTimeout(timer);
     };
   }, []);
@@ -581,6 +663,7 @@ export default function Home() {
   };
 
   const animateContentSwitch = (updater: () => void) => {
+    setIsRoutingToBlog(false);
     setContentVisible(false);
     if (tabTransitionRef.current !== null) {
       window.clearTimeout(tabTransitionRef.current);
@@ -656,6 +739,16 @@ export default function Home() {
   useEffect(() => {
     const onPopState = () => {
       const state = parseLocationState();
+      if (!state.projectId && state.tab === "blog") {
+        const currentUrl = new URL(window.location.href);
+        const params = new URLSearchParams(currentUrl.search);
+        params.delete("tab");
+        params.delete("project");
+        const query = params.toString();
+        navigateWithTransition(`/blog${query ? `?${query}` : ""}`, "replace");
+        return;
+      }
+
       animateContentSwitch(() => {
         setActiveProjectId(state.projectId);
         setActiveTopTab(state.tab);
@@ -676,6 +769,34 @@ export default function Home() {
       return;
     }
 
+    if (nextTab === "blog") {
+      const currentUrl = new URL(window.location.href);
+      const params = new URLSearchParams(currentUrl.search);
+      params.delete("tab");
+      params.delete("project");
+      const query = params.toString();
+
+      setTabPull(0);
+      setLastfmOpen(false);
+      setGithubOpen(false);
+      setLinkedinOpen(false);
+      setIsRoutingToBlog(true);
+      setHoverTopTab("blog");
+      setActiveProjectId(null);
+      window.requestAnimationFrame(() => {
+        setContentVisible(false);
+      });
+
+      if (tabTransitionRef.current !== null) {
+        window.clearTimeout(tabTransitionRef.current);
+      }
+      tabTransitionRef.current = window.setTimeout(() => {
+        window.sessionStorage.setItem(INTERNAL_NAV_KEY, "1");
+        navigateWithTransition(`/blog${query ? `?${query}` : ""}`);
+      }, ROUTE_NAV_DELAY_MS);
+      return;
+    }
+
     const syncAddressBar = () => {
       const currentUrl = new URL(window.location.href);
       const params = new URLSearchParams(currentUrl.search);
@@ -683,9 +804,7 @@ export default function Home() {
       params.delete("project");
 
       const path = "/";
-      if (nextTab === "blog") {
-        params.set("tab", "blog");
-      } else if (nextTab === "void") {
+      if (nextTab === "void") {
         params.set("tab", "void");
       }
 
@@ -700,6 +819,7 @@ export default function Home() {
     setLastfmOpen(false);
     setGithubOpen(false);
     setLinkedinOpen(false);
+    setIsRoutingToBlog(false);
     animateContentSwitch(() => {
       setActiveProjectId(null);
       if (nextTab === "void") {
@@ -736,11 +856,16 @@ export default function Home() {
     return 2;
   };
 
+  const visualTopTab = isRoutingToBlog && hoverTopTab ? hoverTopTab : activeTopTab;
   const activeTabIndex = tabIndex(activeTopTab);
-  const indicatorTab = activeProjectId ? (hoverTopTab ?? lastIndicatorTab) : activeTopTab;
+  const indicatorTab = activeProjectId ? (hoverTopTab ?? lastIndicatorTab) : visualTopTab;
   const indicatorVisible = activeProjectId ? hoverTopTab !== null : true;
-  const indicatorIndex = indicatorTab ? tabIndex(indicatorTab) : 0;
   const currentProject = activeProjectId ? projectsById[activeProjectId] : null;
+  const homeTabActive = !activeProjectId && visualTopTab === "home";
+  const blogTabActive = !activeProjectId && visualTopTab === "blog";
+  const voidTabActive = !activeProjectId && visualTopTab === "void";
+  const topBarName = currentProject ? currentProject.name : displayName;
+  const topBarSubtitle = currentProject ? currentProject.summary : statusText;
   const sanitizedProjectContent = useMemo(() => {
     if (!currentProject) {
       return "";
@@ -823,69 +948,31 @@ export default function Home() {
   return (
     <div data-vaul-drawer-wrapper>
       <main className="shared-module__q8HX2G__baseTypography site-main">
-        <div className={visible ? shownStyle : hiddenStyle}>
-          <header className="site-header">
-            <a
-              href="/"
-              className="site-header-home"
-              onClick={(event) => {
-                event.preventDefault();
-                goHomeFromHeader();
-              }}
-              aria-label="Go to home"
-            >
-              <h1 id="display-name" className="site-name" suppressHydrationWarning>{currentProject ? currentProject.name : displayName}</h1>
-              <div className="site-tagline">{currentProject ? currentProject.summary : statusText}</div>
-            </a>
-            <div
-              className="cloneTopTabs"
-              role="tablist"
-              aria-label="Primary sections"
-              style={{
-                ["--tab-index" as string]: indicatorIndex,
-                ["--tab-pull" as string]: `${tabPull}px`,
-                ["--tab-visible" as string]: indicatorVisible ? 1 : 0
-              }}
-              onMouseMove={handleTopTabsMove}
-              onMouseLeave={() => {
-                setTabPull(0);
-                setHoverTopTab(null);
-              }}
-            >
-              <div className="cloneTopTabsIndicator" />
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTopTab === "home"}
-                className={`cloneTopTab ${!activeProjectId && activeTopTab === "home" ? "cloneTopTabActive" : ""}`}
-                onMouseEnter={() => setHoverTopTab("home")}
-                onClick={() => switchTopTab("home")}
-              >
-                Home
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTopTab === "blog"}
-                className={`cloneTopTab ${!activeProjectId && activeTopTab === "blog" ? "cloneTopTabActive" : ""}`}
-                onMouseEnter={() => setHoverTopTab("blog")}
-                onClick={() => switchTopTab("blog")}
-              >
-                Blog
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTopTab === "void"}
-                className={`cloneTopTab ${!activeProjectId && activeTopTab === "void" ? "cloneTopTabActive" : ""}`}
-                onMouseEnter={() => setHoverTopTab("void")}
-                onClick={() => switchTopTab("void")}
-              >
-                ???
-              </button>
-            </div>
-          </header>
-        </div>
+        <SiteTopBar
+          visible={topBarVisible}
+          noTransition={topBarNoTransition}
+          name={topBarName}
+          subtitle={topBarSubtitle}
+          indicatorTab={indicatorTab}
+          indicatorVisible={indicatorVisible}
+          tabPull={tabPull}
+          homeActive={homeTabActive}
+          blogActive={blogTabActive}
+          voidActive={voidTabActive}
+          onTopTabsMove={handleTopTabsMove}
+          onTopTabsLeave={() => {
+            setTabPull(0);
+            if (!isRoutingToBlog) {
+              setHoverTopTab(null);
+            }
+          }}
+          onHomeEnter={() => setHoverTopTab("home")}
+          onBlogEnter={() => setHoverTopTab("blog")}
+          onVoidEnter={() => setHoverTopTab("void")}
+          onHomeClick={goHomeFromHeader}
+          onBlogClick={() => switchTopTab("blog")}
+          onVoidClick={() => switchTopTab("void")}
+        />
 
         <div className={contentVisible ? shownStyle : hiddenStyle}>
           {activeProjectId && projectsById[activeProjectId] ? (
@@ -1039,7 +1126,6 @@ export default function Home() {
             </>
           ) : activeTopTab === "blog" ? (
             <section className="site-centered-page">
-              <p className="site-centered-text">Blog's coming soon!</p>
             </section>
           ) : (
             <section className="site-centered-page">

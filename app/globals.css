@@ -107,6 +107,10 @@ html[data-display-name="Zoe"] {
   transition: opacity var(--duration-swift) var(--ease-swift), filter var(--duration-swift) var(--ease-swift), transform var(--duration-swift) var(--ease-swift);
 }
 
+.cloneRevealNoTransition {
+  transition: none !important;
+}
+
 .cloneHidden {
   opacity: 0;
   filter: blur(10px);
@@ -115,12 +119,13 @@ html[data-display-name="Zoe"] {
 
 .cloneShown {
   opacity: 1;
-  filter: blur(0px);
+  filter: none;
   transform: none;
 }
 
 .site-main,
 .site-bio,
+.site-bhdr,
 .site-projects,
 .cloneLastfmCard,
 .cloneLinkedinCard {
@@ -148,6 +153,20 @@ html[data-display-name="Zoe"] {
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: center;
+}
+
+.site-build-meta-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-build-meta-link:hover {
+    color: var(--fg-accent);
+    text-decoration-color: var(--fg-accent);
+  }
 }
 
 .notfound-main {
@@ -249,6 +268,7 @@ html[data-display-name="Zoe"] {
 }
 
 .site-bio,
+.site-bhdr,
 .site-projects {
   max-width: 42rem;
   margin-left: auto;
@@ -262,11 +282,24 @@ html[data-display-name="Zoe"] {
   font-size: 1.05rem !important;
 }
 
+.site-bhdr {
+  padding: calc(var(--space-7) + 1.2rem) var(--space-2) var(--space-7);
+  color: var(--fg-accent);
+  font-size: 1.05rem !important;
+}
+
 .site-bio p {
+  margin: 0 0 var(--space-5);
+}
+.site-bhdr p {
   margin: 0 0 var(--space-5);
 }
 
 .site-bio p:last-child {
+  margin-bottom: 0;
+}
+
+.site-bhdr p:last-child {
   margin-bottom: 0;
 }
 
@@ -306,6 +339,10 @@ html[data-display-name="Zoe"] {
 }
 
 .site-bio-line {
+  margin-top: 0.35rem;
+}
+
+.site-bhdr-line {
   margin-top: 0.35rem;
 }
 
@@ -585,6 +622,7 @@ html[data-display-name="Zoe"] {
   font-weight: var(--font-weight-medium);
   line-height: 1;
   text-align: center;
+  text-decoration: none;
   transition: color 220ms ease;
 }
 

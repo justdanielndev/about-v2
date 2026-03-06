@@ -8,7 +8,7 @@ This is my personal about page. It's built with Next.js.
   Info about me, my work, links, and highlighted projects.
 
 - Blog
-  Soon!
+  MDX-powered blog index at `/blog` and post pages at `/blog/[slug]`.
 
 - Network
   Project-style entries are rendered through the homepage + `/project/[projectid]` routes.

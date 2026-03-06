@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BuildMetaFooter from "@/components/build-meta-footer";
 import LayoutNameSync from "@/components/layout-name-sync";
+import PostHogClientProvider from "@/components/posthog-provider";
 import { buildSiteTitle, DEFAULT_NAME, DEFAULT_TRUENAME, getDefaultName, TRUENAME_DOMAINS } from "@/lib/name-resolution";
 import "./globals.css";
 
@@ -17,15 +18,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const earlyNameScript = `(function(){try{var defaultName=${JSON.stringify(DEFAULT_NAME)};var trueName=${JSON.stringify(DEFAULT_TRUENAME)};var domains=${JSON.stringify(TRUENAME_DOMAINS)};var params=new URLSearchParams(window.location.search);var override=(params.get('truename')||'').trim();var host=(window.location.hostname||'').toLowerCase();var isTrueDomain=domains.some(function(d){return host===d||host.endsWith('.'+d)});var resolved=defaultName;if(override&&override.toLowerCase()===trueName.toLowerCase())resolved=trueName;else if(isTrueDomain)resolved=trueName;document.documentElement.setAttribute('data-display-name',resolved);document.title=resolved+' (Portfolio)';var el=document.getElementById('display-name');if(el)el.textContent=resolved;}catch(e){}})();`;
+  const posthogKey = process.env.POSTHOG_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  const posthogHost = process.env.POSTHOG_HOST || process.env.NEXT_PUBLIC_POSTHOG_HOST;
   return (
     <html lang="en" data-theme="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: earlyNameScript }} />
         <LayoutNameSync />
-        <div className="site-root">
-          <div className="site-root-content">{children}</div>
-          <BuildMetaFooter />
-        </div>
+        <PostHogClientProvider apiKey={posthogKey} apiHost={posthogHost}>
+          <div className="site-root">
+            <div className="site-root-content">{children}</div>
+            <BuildMetaFooter />
+          </div>
+        </PostHogClientProvider>
       </body>
     </html>
   );
