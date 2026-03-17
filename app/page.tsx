@@ -166,12 +166,20 @@ function getInitialTopTab(): "home" | "blog" | "void" {
   return "home";
 }
 
-export default function Home() {
+type HomeProps = {
+  initialProjectId?: string | null;
+  standaloneProjectRoute?: boolean;
+};
+
+export default function Home({
+  initialProjectId = null,
+  standaloneProjectRoute = false
+}: HomeProps = {}) {
   const initialTopTab = getInitialTopTab();
   const router = useRouter();
-  const [topBarVisible, setTopBarVisible] = useState(false);
-  const [topBarNoTransition, setTopBarNoTransition] = useState(false);
-  const [contentVisible, setContentVisible] = useState(false);
+  const [topBarVisible, setTopBarVisible] = useState(standaloneProjectRoute);
+  const [topBarNoTransition, setTopBarNoTransition] = useState(standaloneProjectRoute);
+  const [contentVisible, setContentVisible] = useState(standaloneProjectRoute);
   const [isRoutingToBlog, setIsRoutingToBlog] = useState(false);
   const [isTouchOnly, setIsTouchOnly] = useState(false);
   const displayName = getDefaultName();
@@ -180,7 +188,7 @@ export default function Home() {
   const [hoverTopTab, setHoverTopTab] = useState<"home" | "blog" | "void" | null>(null);
   const [lastIndicatorTab, setLastIndicatorTab] = useState<"home" | "blog" | "void">(initialTopTab);
   const [voidText, setVoidText] = useState<string>(VOID_CONTENT[0]);
-  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(initialProjectId);
   const [tabPull, setTabPull] = useState(0);
   const [highlight, setHighlight] = useState<RowHighlight>({ top: 0, height: 0, opacity: 0 });
   const [lastfmOpen, setLastfmOpen] = useState(false);
@@ -259,6 +267,9 @@ export default function Home() {
       window.sessionStorage.removeItem(INTERNAL_NAV_KEY);
       setTopBarNoTransition(true);
       setTopBarVisible(true);
+    } else if (standaloneProjectRoute) {
+      setTopBarNoTransition(true);
+      setTopBarVisible(true);
     } else {
       topBarFrame = window.requestAnimationFrame(() => {
         setTopBarNoTransition(false);
@@ -307,6 +318,15 @@ export default function Home() {
       };
     }
 
+    if (standaloneProjectRoute) {
+      setContentVisible(true);
+      return () => {
+        if (topBarFrame !== null) {
+          window.cancelAnimationFrame(topBarFrame);
+        }
+      };
+    }
+
     const timer = window.setTimeout(() => {
       setContentVisible(true);
     }, 30);
@@ -316,7 +336,7 @@ export default function Home() {
       }
       window.clearTimeout(timer);
     };
-  }, []);
+  }, [standaloneProjectRoute]);
 
   useEffect(() => {
     return () => {

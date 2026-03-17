@@ -1,31 +1,60 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import Home from "@/app/page";
+import { notFound } from "next/navigation";
+import { projects, projectsById } from "@/lib/projects";
+import { toCanonicalUrl } from "@/lib/seo";
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-export default async function ProjectRedirectPage({
-  params,
-  searchParams
-}: {
+type ProjectPageProps = {
   params: Promise<{ projectid: string }>;
-  searchParams?: Promise<SearchParams>;
-}) {
-  const query = new URLSearchParams();
-  const resolvedParams = await params;
-  const resolvedSearch = (await searchParams) ?? {};
+};
 
-  for (const [key, value] of Object.entries(resolvedSearch)) {
-    if (key === "project" || key === "tab") {
-      continue;
-    }
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        query.append(key, item);
-      }
-    } else if (typeof value === "string") {
-      query.set(key, value);
-    }
+export async function generateStaticParams() {
+  return projects.map((project) => ({
+    projectid: project.id
+  }));
+}
+
+export async function generateMetadata({
+  params
+}: ProjectPageProps): Promise<Metadata> {
+  const { projectid } = await params;
+  const project = projectsById[projectid];
+
+  if (!project) {
+    return {};
   }
 
-  query.set("project", resolvedParams.projectid);
-  redirect(`/?${query.toString()}`);
+  return {
+    title: `${project.name} | Daniel Negre Navarro`,
+    description: project.summary,
+    alternates: {
+      canonical: `/project/${project.id}`
+    },
+    openGraph: {
+      title: project.name,
+      description: project.summary,
+      url: toCanonicalUrl(`/project/${project.id}`),
+      type: "article"
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: project.name,
+      description: project.summary
+    }
+  };
+}
+
+export default async function ProjectPage({ params }: ProjectPageProps) {
+  const { projectid } = await params;
+  const project = projectsById[projectid];
+
+  if (!project) {
+    notFound();
+  }
+
+  return (
+    <div data-vaul-drawer-wrapper>
+      <Home initialProjectId={project.id} standaloneProjectRoute />
+    </div>
+  );
 }
