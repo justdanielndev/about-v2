@@ -18,6 +18,15 @@ export const projects: ProjectEntry[] = [
       "Nix Entertainment is a media (animation, games and other categories) studio I created with a small group of amazing people. Our mission is to entertain the world in new ways, to help make it fun and enjoyable again.<br/><br/>Our first and current animated series is Shadowborne Chronicles. Its story goes around Umbriel and Aria, two... friends? maybe we could call it that...<br/>Who unexpectedly meet, and go on a journey to fight against Zarka, the leader of the Shadow Lieutenants and main antagonist of Season 1.<br/>Across their journey they'll discover more about themselves, about their world and about their past, and maybe even learn to accept each other.<br/><br/>We're working on Season 1 at the moment, and once the series is finished, we have some more ideas we'll work on! Stay tuned!<br/><br/>If you want to know more about Nix Entertainment, check it out <a href='https://nixentertainment.com' target='_blank' rel='noopener noreferrer'>here</a>! I must say, the website is fire."
   },
   {
+    id: "le-node",
+    year: "202X",
+    name: "Le Node (Company-grade in-house server)",
+    type: "Personal Project",
+    summary: "My personal homelab composed of more than 4 servers.",
+    content:
+      "Mostly everything you'll see from me runs on this system.<br/><br/> Le Node is my personal homelab, and is composed of a Proxmox server, a NAS, three Raspberry Pis, a couple of desktop PCs, and a Mac Mini. It runs 24/7 with 99.9% uptime across (currently) 10TB of storage.<br/><br/>In total it has 100+ GB of RAM, with 64 of those being DDR5. It allows me to have coverage of all CPU archs, since it has nodes with Intel, AMD and ARM chips, and runs Windows, Linux, and macOS natively.<br/><br/>Le Node hosts most of my websites, some Nix Entertainment infrastructure, Hack Club projects such as HC Wrapped, some media servers, Home Assistant, a gaming server, and AI experiments.<br/><br/>Deployments are launched via both Coolify containers and Proxmox VMs and LXC containers."
+  },
+  {
     id: "daydream-valencia",
     year: "2025",
     name: "Daydream Valencia",
