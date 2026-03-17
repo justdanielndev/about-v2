@@ -968,7 +968,7 @@ export default function Home() {
           ) : activeTopTab === "home" ? (
             <>
               <section className="site-bio">
-            <p>Hey {getExpression()} I'm <span className="display-name-default">{displayName}</span>! I'm a director, writer, developer... Overall, I make projects that are designed improve people's lives.</p>
+            <p>Hey {getExpression()} I'm <span className="display-name-default">{displayName}</span>! I'm a director, writer, developer... Overall, I make projects that are designed to improve people's lives.</p>
             <p>
               The "coolest" part of what I do? I'm the founder and director of{" "}
               <a
@@ -994,7 +994,7 @@ export default function Home() {
                 }}
               >
                 <span style={{ pointerEvents: "none" }}>SoundChestAI</span>
-              </a>, an AI-powered sthetoscope that can detect anomalies in lung sounds, which made us win a trip to Barcelona!), as well as some fun passion projects you can find on my {" "}
+              </a>, an AI-powered stethoscope that can detect anomalies in lung sounds, which made us win a trip to Barcelona!), as well as some fun passion projects you can find on my {" "}
               <a
                   ref={githubTriggerRef}
                   href={github?.profileUrl ?? `https://github.com/${encodeURIComponent(GITHUB_USER)}`}
@@ -1007,6 +1007,17 @@ export default function Home() {
                 >
                   <span style={{ pointerEvents: "none" }}>GitHub</span>
                 </a>.
+            </p>
+            <p>
+              In order to be able to run all these projects, I built a custom company-scale server called {" "}
+              <a
+                href="/project/le-node"
+                onClick={(event) => {
+                  event.preventDefault();
+                  openProjectPage("le-node");
+                }}
+              ><span style={{ pointerEvents: "none" }}>Le Node</span>
+              </a>, which is designed to be powerful and easy to deploy on, totalling 100+ GB of RAM and 30 CPU cores across all nodes.
             </p>
             <p>
               When I'm not working, eating or sleeping, I like to research and investigate about random things, as well as listen to music. If you want to see what I'm listening to at the moment, {" "}
