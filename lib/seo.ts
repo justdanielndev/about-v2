@@ -15,7 +15,7 @@ function normalizeOrigin(raw: string): string {
 }
 
 export const CANONICAL_ORIGIN = normalizeOrigin(
-  process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_CANONICAL_ORIGIN
+  DEFAULT_CANONICAL_ORIGIN
 );
 
 export function toCanonicalUrl(pathname: string): string {
