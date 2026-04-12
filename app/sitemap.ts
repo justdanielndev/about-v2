@@ -39,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: toCanonicalUrl(`/project/${project.id}`),
     lastModified: now,
     changeFrequency: "monthly",
-    priority: 0.7
+    priority: 0.5
   }));
 
   return [...staticRoutes, ...blogRoutes, ...projectRoutes];
