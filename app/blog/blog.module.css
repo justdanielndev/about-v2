@@ -276,6 +276,22 @@
   scroll-margin-top: 2rem;
 }
 
+.prose :global(h2.tocOnlyHeading),
+.prose :global(h3.tocOnlyHeading) {
+  margin: 6rem 0 0;
+  height: 0;
+  opacity: 0;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.prose :global(h2.tocOnlyHeading):first-of-type,
+.prose :global(h3.tocOnlyHeading):first-of-type {
+  margin-top: 0;
+}
+
 .prose a {
   color: var(--othercolor);
   text-decoration: underline;

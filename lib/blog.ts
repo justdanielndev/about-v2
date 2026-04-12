@@ -75,6 +75,10 @@ function stripInlineMarkdown(value: string): string {
     .trim();
 }
 
+function stripHtmlTags(value: string): string {
+  return value.replace(/<[^>]+>/g, "").trim();
+}
+
 function extractHeadings(content: string): BlogHeading[] {
   const lines = content.split(/\r?\n/);
   const headings: BlogHeading[] = [];
@@ -93,19 +97,40 @@ function extractHeadings(content: string): BlogHeading[] {
       continue;
     }
 
-    const match = /^(#{2,3})\s+(.+)$/.exec(trimmed);
-    if (!match) {
+    const markdownMatch = /^(#{2,3})\s+(.+)$/.exec(trimmed);
+    if (markdownMatch) {
+      const level = markdownMatch[1].length as 2 | 3;
+      const title = stripInlineMarkdown(markdownMatch[2]);
+      if (!title) {
+        continue;
+      }
+
+      headings.push({
+        id: slugger.slug(title),
+        level,
+        title
+      });
       continue;
     }
 
-    const level = match[1].length as 2 | 3;
-    const title = stripInlineMarkdown(match[2]);
+    const htmlMatch = /^<h([23])([^>]*)>([\s\S]*?)<\/h\1>$/.exec(trimmed);
+    if (!htmlMatch) {
+      continue;
+    }
+
+    const level = Number(htmlMatch[1]) as 2 | 3;
+    const attrs = htmlMatch[2] ?? "";
+    const rawTitle = htmlMatch[3] ?? "";
+    const title = stripInlineMarkdown(stripHtmlTags(rawTitle));
     if (!title) {
       continue;
     }
 
+    const idMatch = /\sid=(?:"([^"]+)"|'([^']+)')/.exec(attrs);
+    const explicitId = idMatch?.[1] ?? idMatch?.[2];
+
     headings.push({
-      id: slugger.slug(title),
+      id: explicitId || slugger.slug(title),
       level,
       title
     });
