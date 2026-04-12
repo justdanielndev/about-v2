@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     follow: true
   },
   title: buildSiteTitle(defaultName),
-  description: `Hi! :3 I'm ${defaultName}! I'm a director, writer, developer... Overall, I make projects that are designed to improve people's lives.`
+  description: "Daniel Negre Navarro - developer, director, and writer from Valencia :D Building projects that improve people's lives."
 };
 
 export default function RootLayout({
