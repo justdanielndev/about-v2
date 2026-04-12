@@ -1,4 +1,4 @@
-export const DEFAULT_CANONICAL_ORIGIN = "https://negrenavarro.me";
+export const DEFAULT_CANONICAL_ORIGIN = "https://daniel.negrenavarro.me";
 
 function normalizeOrigin(raw: string): string {
   const trimmed = raw.trim();
