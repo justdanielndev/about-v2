@@ -41,6 +41,9 @@ export default function RootLayout({
     <html lang="en" data-theme="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <head>
         <link rel="preload" as="image" href="/image.png" />
+        <link rel="preload" as="image" href="/wave.png" />
+        <link rel="preload" as="image" href="/envelope.png" />
+        <link rel="preload" as="image" href="/nix.png" />
       </head>
       <body>
         <GlobalStructuredData />

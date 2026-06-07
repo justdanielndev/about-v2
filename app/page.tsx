@@ -379,14 +379,27 @@ export default function Home({
       };
     }
 
-    const timer = window.setTimeout(() => {
-      setContentVisible(true);
-    }, 30);
+    let safetyTimer: number;
+    let cancelled = false;
+    const PRELOAD_SRCS = ["/image.png", "/wave.png", "/envelope.png", "/nix.png"];
+    const loadImg = (src: string) => new Promise<void>((resolve) => {
+      const img = new window.Image();
+      img.src = src;
+      if (img.complete) { resolve(); return; }
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+    const reveal = () => {
+      if (cancelled) return;
+      window.clearTimeout(safetyTimer);
+      window.requestAnimationFrame(() => { if (!cancelled) setContentVisible(true); });
+    };
+    safetyTimer = window.setTimeout(reveal, 2500);
+    Promise.all(PRELOAD_SRCS.map(loadImg)).then(reveal);
     return () => {
-      if (topBarFrame !== null) {
-        window.cancelAnimationFrame(topBarFrame);
-      }
-      window.clearTimeout(timer);
+      cancelled = true;
+      if (topBarFrame !== null) window.cancelAnimationFrame(topBarFrame);
+      window.clearTimeout(safetyTimer);
     };
   }, [standaloneProjectRoute]);
 
