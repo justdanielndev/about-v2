@@ -10,6 +10,8 @@ const ALLOWED_TAGS = new Set([
   "ol",
   "li",
   "a",
+  "img",
+  "h2",
   "h3",
   "h4"
 ]);
@@ -79,6 +81,17 @@ export function sanitizeProjectHtml(input: string): string {
         el.removeAttribute("target");
         el.removeAttribute("rel");
       }
+    } else if (tag === "img") {
+      const src = el.getAttribute("src") ?? "";
+      const alt = el.getAttribute("alt") ?? "";
+      const cls = el.getAttribute("class") ?? "";
+      for (const attr of Array.from(el.attributes)) {
+        el.removeAttribute(attr.name);
+      }
+      if (isSafeHref(src)) el.setAttribute("src", src);
+      el.setAttribute("alt", alt);
+      if (cls) el.setAttribute("class", cls);
+      el.setAttribute("loading", "lazy");
     } else {
       for (const attr of Array.from(el.attributes)) {
         el.removeAttribute(attr.name);

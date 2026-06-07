@@ -1,0 +1,12 @@
+{
+  "name": "about-v2-server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node --experimental-strip-types index.ts",
+    "dev": "node --watch --experimental-strip-types index.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

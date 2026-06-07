@@ -7,7 +7,7 @@ type LastfmNow = {
   albumArt: string | null;
   timestamp: number | null;
   nowPlaying: boolean;
-  url: string;
+  url: string | null;
 };
 
 const LASTFM_API_URL = "https://ws.audioscrobbler.com/2.0/";
@@ -68,7 +68,7 @@ async function fromApi(user: string, apiKey: string): Promise<LastfmNow | null> 
     albumArt: art || null,
     timestamp: first.date?.uts ? Number(first.date.uts) : null,
     nowPlaying: first["@attr"]?.nowplaying === "true",
-    url: first.url || `https://www.last.fm/user/${encodeURIComponent(user)}`
+    url: first.url || null
   };
 }
 
@@ -90,7 +90,9 @@ async function fromHtml(user: string): Promise<LastfmNow | null> {
     return null;
   }
 
-  const track = row.match(/class="chartlist-name"[\s\S]*?<a[\s\S]*?>([^<]+)<\/a>/i)?.[1];
+  const trackMatch = row.match(/class="chartlist-name"[\s\S]*?<a\s+href="([^"]+)"[\s\S]*?>([^<]+)<\/a>/i);
+  const track = trackMatch?.[2];
+  const trackPath = trackMatch?.[1] ?? null;
   const artist = row.match(/class="chartlist-artist"[\s\S]*?<a[\s\S]*?>([^<]+)<\/a>/i)?.[1];
   const albumArt = row.match(/class="chartlist-image"[\s\S]*?<img[\s\S]*?src="([^"]+)"/i)?.[1] || null;
   const tsRaw = row.match(/data-timestamp="(\d+)"/i)?.[1] || null;
@@ -106,7 +108,7 @@ async function fromHtml(user: string): Promise<LastfmNow | null> {
     albumArt,
     timestamp: tsRaw ? Number(tsRaw) : null,
     nowPlaying: false,
-    url: `https://www.last.fm/user/${encodeURIComponent(user)}`
+    url: trackPath ? `https://www.last.fm${trackPath.startsWith("/") ? "" : "/"}${trackPath}` : null
   };
 }
 

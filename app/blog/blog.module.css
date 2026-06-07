@@ -295,7 +295,7 @@
 .prose a {
   color: var(--othercolor);
   text-decoration: underline;
-  text-decoration-color: var(--border);
+  text-decoration-color: var(--link-underline);
   text-underline-offset: 3px;
 }
 

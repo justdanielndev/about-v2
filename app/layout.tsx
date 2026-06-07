@@ -10,15 +10,24 @@ const defaultName = getDefaultName();
 
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_ORIGIN),
-  alternates: {
-    canonical: "/"
-  },
-  robots: {
-    index: true,
-    follow: true
-  },
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
   title: buildSiteTitle(defaultName),
-  description: "Daniel Negre Navarro - developer, director, and writer from Valencia :D Building projects that improve people's lives."
+  description: "Daniel Negre — developer, director, and writer from Valencia. Building projects that improve people's lives.",
+  openGraph: {
+    title: defaultName,
+    description: "Developer, director, and writer from Valencia. Building projects that improve people's lives.",
+    url: CANONICAL_ORIGIN,
+    siteName: defaultName,
+    images: [{ url: "/linkedin.png", width: 400, height: 400, alt: defaultName }],
+    type: "website"
+  },
+  twitter: {
+    card: "summary",
+    title: defaultName,
+    description: "Developer, director, and writer from Valencia.",
+    images: ["/linkedin.png"]
+  }
 };
 
 export default function RootLayout({
@@ -30,6 +39,9 @@ export default function RootLayout({
   const posthogHost = process.env.POSTHOG_HOST || process.env.NEXT_PUBLIC_POSTHOG_HOST;
   return (
     <html lang="en" data-theme="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
+      <head>
+        <link rel="preload" as="image" href="/image.png" />
+      </head>
       <body>
         <GlobalStructuredData />
         <PostHogClientProvider apiKey={posthogKey} apiHost={posthogHost}>

@@ -219,9 +219,11 @@ export default function TopBar({ active }: TopBarProps) {
       onHomeEnter={() => setHoverTopTab("home")}
       onBlogEnter={() => setHoverTopTab("blog")}
       onVoidEnter={() => setHoverTopTab("void")}
+
       onHomeClick={() => goTo("home")}
       onBlogClick={() => goTo("blog")}
       onVoidClick={() => goTo("void")}
+
     />
   );
 }
