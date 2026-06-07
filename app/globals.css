@@ -72,6 +72,32 @@ body {
   background: #000;
 }
 
+.site-loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s var(--ease-smooth);
+}
+
+.site-loader-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.site-loader-number {
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.05em;
+  color: var(--othercolor);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  line-height: 1;
+}
+
 .site-root {
   min-height: 100vh;
   display: flex;

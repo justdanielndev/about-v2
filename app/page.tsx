@@ -39,6 +39,8 @@ type ChatStep = "idle" | "opening" | "name" | "name-sent" | "message" | "message
 type ChatMsg = { id: number; from: "daniel" | "user"; text: string; time: string };
 
 
+const PRELOAD_SRCS = ["/image.png", "/wave.png", "/envelope.png", "/nix.png"] as const;
+
 const hiddenStyle = "cloneReveal cloneHidden";
 const shownStyle = "cloneReveal cloneShown";
 const LASTFM_USER = "pluralzoe";
@@ -207,6 +209,13 @@ export default function Home({
   const [contentVisible, setContentVisible] = useState(standaloneProjectRoute);
   const [isRoutingToBlog, setIsRoutingToBlog] = useState(false);
   const [isTouchOnly, setIsTouchOnly] = useState(false);
+  const [loaderProgress, setLoaderProgress] = useState(0);
+  const [loaderDone, setLoaderDone] = useState(() =>
+    standaloneProjectRoute ||
+    (typeof window !== "undefined" && !!window.sessionStorage.getItem("from-blog-nav"))
+  );
+  const loadedCountRef = useRef(0);
+  const loaderTickRef = useRef<number | null>(null);
   const displayName = getDefaultName();
   const [statusText, setStatusText] = useState(" ");
   const [activeTopTab, setActiveTopTab] = useState<"home" | "blog" | "void">(initialTopTab);
@@ -359,46 +368,62 @@ export default function Home({
     const fromBlogNav = window.sessionStorage.getItem("from-blog-nav");
     if (fromBlogNav) {
       window.sessionStorage.removeItem("from-blog-nav");
+      setLoaderDone(true);
       const frame = window.requestAnimationFrame(() => {
         setContentVisible(true);
       });
       return () => {
-        if (topBarFrame !== null) {
-          window.cancelAnimationFrame(topBarFrame);
-        }
+        if (topBarFrame !== null) window.cancelAnimationFrame(topBarFrame);
         window.cancelAnimationFrame(frame);
       };
     }
 
     if (standaloneProjectRoute) {
+      setLoaderDone(true);
       setContentVisible(true);
       return () => {
-        if (topBarFrame !== null) {
-          window.cancelAnimationFrame(topBarFrame);
-        }
+        if (topBarFrame !== null) window.cancelAnimationFrame(topBarFrame);
       };
     }
 
-    let safetyTimer: number;
     let cancelled = false;
-    const PRELOAD_SRCS = ["/image.png", "/wave.png", "/envelope.png", "/nix.png"];
+    let current = 0;
+    const safetyTimer = window.setTimeout(() => {
+      loadedCountRef.current = PRELOAD_SRCS.length;
+    }, 5000);
+
+    const tick = () => {
+      if (cancelled) return;
+      const maxProgress = Math.round((loadedCountRef.current / PRELOAD_SRCS.length) * 100);
+      if (current < maxProgress) {
+        current++;
+        setLoaderProgress(current);
+      }
+      if (current >= 100) {
+        setLoaderDone(true);
+        window.clearTimeout(safetyTimer);
+        window.setTimeout(() => {
+          if (!cancelled) window.requestAnimationFrame(() => setContentVisible(true));
+        }, 300);
+      } else {
+        loaderTickRef.current = window.setTimeout(tick, 20);
+      }
+    };
+    loaderTickRef.current = window.setTimeout(tick, 20);
+
     const loadImg = (src: string) => new Promise<void>((resolve) => {
       const img = new window.Image();
       img.src = src;
-      if (img.complete) { resolve(); return; }
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
+      if (img.complete) { loadedCountRef.current++; resolve(); return; }
+      img.onload = () => { loadedCountRef.current++; resolve(); };
+      img.onerror = () => { loadedCountRef.current++; resolve(); };
     });
-    const reveal = () => {
-      if (cancelled) return;
-      window.clearTimeout(safetyTimer);
-      window.requestAnimationFrame(() => { if (!cancelled) setContentVisible(true); });
-    };
-    safetyTimer = window.setTimeout(reveal, 2500);
-    Promise.all(PRELOAD_SRCS.map(loadImg)).then(reveal);
+    Promise.all([...PRELOAD_SRCS].map(loadImg)).then(() => window.clearTimeout(safetyTimer));
+
     return () => {
       cancelled = true;
       if (topBarFrame !== null) window.cancelAnimationFrame(topBarFrame);
+      if (loaderTickRef.current !== null) window.clearTimeout(loaderTickRef.current);
       window.clearTimeout(safetyTimer);
     };
   }, [standaloneProjectRoute]);
@@ -1311,6 +1336,11 @@ export default function Home({
 
   return (
     <div data-vaul-drawer-wrapper>
+      <div className={`site-loader${loaderDone ? " site-loader-done" : ""}`} aria-hidden="true">
+        <span className="site-loader-number">
+          {loaderProgress >= 100 ? "100" : String(loaderProgress).padStart(2, "0")}
+        </span>
+      </div>
       <main className="shared-module__q8HX2G__baseTypography site-main">
         <SiteTopBar
           visible={topBarVisible}
