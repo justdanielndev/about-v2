@@ -394,7 +394,8 @@ export default function Home({
 
     const tick = () => {
       if (cancelled) return;
-      const maxProgress = Math.round((loadedCountRef.current / PRELOAD_SRCS.length) * 100);
+      const allLoaded = loadedCountRef.current >= PRELOAD_SRCS.length;
+      const maxProgress = current < 99 ? 99 : (allLoaded ? 100 : 99);
       if (current < maxProgress) {
         current++;
         setLoaderProgress(current);
@@ -747,7 +748,7 @@ export default function Home({
 
   };
 
-  const animateContentSwitch = (updater: () => void) => {
+  const animateContentSwitch = (updater: () => void, imageSrcs?: string[]) => {
     setIsRoutingToBlog(false);
     setContentVisible(false);
     if (tabTransitionRef.current !== null) {
@@ -755,7 +756,28 @@ export default function Home({
     }
     tabTransitionRef.current = window.setTimeout(() => {
       updater();
-      requestAnimationFrame(() => setContentVisible(true));
+      if (imageSrcs && imageSrcs.length > 0) {
+        setLoaderDone(false);
+        setLoaderProgress(0);
+        let loaded = 0;
+        const onLoad = () => {
+          loaded++;
+          setLoaderProgress(Math.round((loaded / imageSrcs.length) * 100));
+          if (loaded >= imageSrcs.length) {
+            setLoaderDone(true);
+            window.setTimeout(() => requestAnimationFrame(() => setContentVisible(true)), 150);
+          }
+        };
+        imageSrcs.forEach(src => {
+          const img = new window.Image();
+          img.src = src;
+          if (img.complete) { onLoad(); return; }
+          img.onload = onLoad;
+          img.onerror = onLoad;
+        });
+      } else {
+        requestAnimationFrame(() => setContentVisible(true));
+      }
     }, 220);
   };
 
@@ -928,10 +950,21 @@ export default function Home({
     setGithubOpen(false);
     setLinkedinOpen(false);
 
+    const projectImgSrcs: string[] = [];
+    const projectContent = projectsById[projectId]?.content;
+    if (projectContent && typeof document !== "undefined") {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = projectContent;
+      tmp.querySelectorAll("img[src]").forEach(img => {
+        const src = img.getAttribute("src");
+        if (src && !src.startsWith("data:")) projectImgSrcs.push(src);
+      });
+    }
+
     animateContentSwitch(() => {
       setActiveProjectId(projectId);
       setActiveTopTab("home");
-    });
+    }, projectImgSrcs);
   };
 
   const closeProjectPage = () => {

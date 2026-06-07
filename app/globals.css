@@ -89,10 +89,10 @@ body {
 }
 
 .site-loader-number {
-  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-size: 1.1rem;
   font-weight: var(--font-weight-medium);
-  letter-spacing: -0.05em;
-  color: var(--othercolor);
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.55);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   line-height: 1;
