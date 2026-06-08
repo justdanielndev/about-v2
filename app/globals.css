@@ -69,6 +69,7 @@ select {
 
 body {
   background: #000;
+  scrollbar-gutter: stable;
 }
 
 .site-loader {
