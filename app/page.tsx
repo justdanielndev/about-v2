@@ -39,7 +39,7 @@ type ChatStep = "idle" | "opening" | "name" | "name-sent" | "message" | "message
 type ChatMsg = { id: number; from: "daniel" | "user"; text: string; time: string };
 
 
-const PRELOAD_SRCS = ["/image.jpg", "/wave.png", "/envelope.png", "/nix.png"] as const;
+const PRELOAD_SRCS = ["/image.jpg", "/envelope.png", "/nix.png"] as const;
 
 const hiddenStyle = "cloneReveal cloneHidden";
 const shownStyle = "cloneReveal cloneShown";
@@ -407,10 +407,10 @@ export default function Home({
           if (!cancelled) window.requestAnimationFrame(() => setContentVisible(true));
         }, 300);
       } else {
-        loaderTickRef.current = window.setTimeout(tick, 20);
+        loaderTickRef.current = window.setTimeout(tick, 5);
       }
     };
-    loaderTickRef.current = window.setTimeout(tick, 20);
+    loaderTickRef.current = window.setTimeout(tick, 5);
 
     const loadImg = (src: string) => {
       const img = new window.Image();
