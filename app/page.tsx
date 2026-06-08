@@ -1572,6 +1572,7 @@ export default function Home({
                   , an AI-powered stethoscope that detects lung anomalies and won us a trip to Barcelona, as well as some fun passion projects you can find on my{" "}
                   <a
                     href={github?.profileUrl ?? `https://github.com/${encodeURIComponent(GITHUB_USER)}`}
+                    title="Daniel Negre on GitHub"
                     target="_blank"
                     rel="noopener noreferrer"
                     onMouseEnter={(e) => { githubActiveTriggerRef.current = e.currentTarget as HTMLElement; openGithub(); }}
