@@ -81,7 +81,7 @@ export default function BuildMetaFooter() {
 
   return (
     <footer className="site-build-meta" aria-label="Build info">
-      <a href={buildMetaLabel.commitUrl} target="_blank" rel="noopener noreferrer" className="site-build-meta-link">
+      <a href={buildMetaLabel.commitUrl} target="_blank" rel="noopener noreferrer" className="site-build-meta-link" title="View commit on GitHub">
         {buildMetaLabel.commitLabel}
       </a>
       {" - "}

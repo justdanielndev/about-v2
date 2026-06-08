@@ -1346,6 +1346,7 @@ export default function Home({
           <a
             key={id}
             href={`/project/${id}`}
+            title={`${name} | ${type} (${year})`}
             className="site-project-row"
             ref={(node) => {
               rowRefs.current[index] = node;
@@ -1438,7 +1439,7 @@ export default function Home({
                     className="site-hero-say-hi-btn"
                     onClick={() => setSayHiOpen(true)}
                   >
-                    Let's talk! <img src="/envelope.png" alt="" className="site-hero-wave" draggable={false} />
+                    Let's talk! <img src="/envelope.png" alt="envelope" className="site-hero-wave" draggable={false} />
                   </button>
                   <div className="site-hero-icon-row">
                     <button
@@ -1451,7 +1452,7 @@ export default function Home({
                       onFocus={openLinkedin}
                       onBlur={closeLinkedin}
                     >
-                      <a href="https://www.linkedin.com/in/daniel-negre/"><img src="/linkedin.svg" alt="LinkedIn" draggable={false} /></a>
+                      <a href="https://www.linkedin.com/in/daniel-negre/" title="Daniel Negre on LinkedIn"><img src="/linkedin.svg" alt="LinkedIn" draggable={false} /></a>
                     </button>
                     <button
                       ref={githubTriggerRef as unknown as React.RefObject<HTMLButtonElement>}
@@ -1463,7 +1464,7 @@ export default function Home({
                       onFocus={() => { githubActiveTriggerRef.current = githubTriggerRef.current; openGithub(); }}
                       onBlur={closeGithub}
                     >
-                      <a href="https://github.com/justdanielndev/"><img src="/github.svg" alt="GitHub" draggable={false} /></a>
+                      <a href="https://github.com/justdanielndev/" title="Daniel Negre on GitHub"><img src="/github.svg" alt="GitHub" draggable={false} /></a>
                     </button>
                     <span className="inline-tooltip-wrapper">
                       <button
@@ -1493,9 +1494,10 @@ export default function Home({
                 </p>
                 <p className="site-hero-bio-p">
                   In addition to this, I am the Founder and Chief Director of<br/>{" "}
-                  <img src="/nix.png" alt="" className="bio-inline-logo bio-inline-nix" draggable={false} />
+                  <img src="/nix.png" alt="Nix Entertainment logo" className="bio-inline-logo bio-inline-nix" draggable={false} />
                   <a
                     href="/project/nixentertainment"
+                    title="Nix Entertainment | Daniel's media group"
                     onClick={(event) => {
                       event.preventDefault();
                       openProjectPage("nixentertainment");
@@ -1504,10 +1506,10 @@ export default function Home({
                     Nix Entertainment
                   </a>
                   . We're a media group working on projects like{" "}
-                  <a href="https://nixentertainment.com/shadowborne-chronicles" target="_blank" rel="noopener noreferrer">
+                  <a href="https://nixentertainment.com/shadowborne-chronicles" title="Shadowborne Chronicles | Animated Series by Nix Entertainment" target="_blank" rel="noopener noreferrer">
                     <span className="shadowborne-wrap" style={{ pointerEvents: "none" }}>
                       <img src="/shadowborne.png" alt="Shadowborne Chronicles" className="bio-inline-logo bio-inline-logo-wide shadowborne-default" draggable={false} />
-                      <img src="/shadowborne-white.png" alt="" className="bio-inline-logo bio-inline-logo-wide shadowborne-white" draggable={false} aria-hidden="true" />
+                      <img src="/shadowborne-white.png" alt="Shadowborne Chronicles" className="bio-inline-logo bio-inline-logo-wide shadowborne-white" draggable={false} aria-hidden="true" />
                     </span>
                   </a>
                   , a fantasy animated series that I'm proudly directing. We also have some secret stuff in the works that I can't talk about yet, but stay tuned!
@@ -1559,6 +1561,7 @@ export default function Home({
                     Outside of work, I make projects for competitions, like{" "}
                   <a
                     href="/project/soundchestai"
+                    title="SoundChestAI | AI-powered stethoscope by Daniel Negre"
                     onClick={(event) => {
                       event.preventDefault();
                       openProjectPage("soundchestai");
@@ -1584,6 +1587,7 @@ export default function Home({
                   In order to be able to run all the software involved in my designs, I built a custom company-scale server called{" "}
                   <a
                     href="/project/le-node"
+                    title="Le Node | Daniel's custom homelab server"
                     onClick={(event) => {
                       event.preventDefault();
                       openProjectPage("le-node");
@@ -1657,7 +1661,7 @@ export default function Home({
           const inner = (
             <>
               {lastfm?.albumArt ? (
-                <img className="cloneLastfmArt" src={lastfm.albumArt} alt="" loading="lazy" />
+                <img className="cloneLastfmArt" src={lastfm.albumArt} alt={`${lastfm.track} album art`} loading="lazy" />
               ) : (
                 <div className="cloneLastfmBadge" aria-hidden="true">L</div>
               )}
@@ -1677,7 +1681,7 @@ export default function Home({
             </>
           );
           return lastfm?.url
-            ? <a href={lastfm.url} target="_blank" rel="noopener noreferrer" className="cloneLastfmCard" aria-label="Open on Last.fm">{inner}</a>
+            ? <a href={lastfm.url} target="_blank" rel="noopener noreferrer" className="cloneLastfmCard" aria-label="Open on Last.fm" title={`${lastfm.track} by ${lastfm.artist} on Last.fm`}>{inner}</a>
             : <div className="cloneLastfmCard">{inner}</div>;
         })()}
       </div>
@@ -1689,7 +1693,7 @@ export default function Home({
       >
         <div className="cloneLastfmCard cloneGithubCard">
           <div className="cloneGithubHeader">
-            <img className="cloneGithubAvatar" src={github?.avatarUrl ?? "/linkedin.jpg"} alt="" loading="lazy" />
+            <img className="cloneGithubAvatar" src={github?.avatarUrl ?? "/linkedin.jpg"} alt={github?.user ?? "GitHub avatar"} loading="lazy" />
             <div className="previewInfo">
               <p className="previewTitle">GitHub</p>
               <p className="previewMeta">@{github?.user ?? GITHUB_USER}</p>
@@ -1705,7 +1709,7 @@ export default function Home({
         style={{ top: `${linkedinPos.top}px`, left: `${linkedinPos.left}px` }}
       >
         <div className="cloneLastfmCard cloneLinkedinCard">
-          <img className="cloneLinkedinAvatar" src="/linkedin.jpg" alt="" loading="lazy" />
+          <img className="cloneLinkedinAvatar" src="/linkedin.jpg" alt="Daniel Negre" loading="lazy" />
           <div className="previewInfo">
             <p className="previewTitle">LinkedIn</p>
             <p className="previewMeta">Founder @ Nix Entertainment | Media Production</p>
@@ -1721,7 +1725,7 @@ export default function Home({
               {chatMessages.some(m => m.from === "user") && chatStep !== "done" && chatRetryEmail === null && (
                 <button type="button" className="say-hi-undo-btn" onClick={handleUndo} aria-label="Undo">Undo</button>
               )}
-              <img src="/linkedin.jpg" alt="" className="say-hi-chat-avatar" loading="eager" />
+              <img src="/linkedin.jpg" alt="Daniel Negre" className="say-hi-chat-avatar" loading="eager" />
               <span className="say-hi-chat-name">Daniel</span>
               <button type="button" className="say-hi-close" onClick={() => setSayHiOpen(false)} aria-label="Close">✕</button>
             </div>
