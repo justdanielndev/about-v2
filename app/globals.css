@@ -69,6 +69,9 @@ select {
 
 body {
   background: #000;
+}
+
+html {
   scrollbar-gutter: stable;
 }
 
