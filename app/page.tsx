@@ -39,7 +39,7 @@ type ChatStep = "idle" | "opening" | "name" | "name-sent" | "message" | "message
 type ChatMsg = { id: number; from: "daniel" | "user"; text: string; time: string };
 
 
-const PRELOAD_SRCS = ["/image.png", "/wave.png", "/envelope.png", "/nix.png"] as const;
+const PRELOAD_SRCS = ["/image.jpg", "/wave.png", "/envelope.png", "/nix.png"] as const;
 
 const hiddenStyle = "cloneReveal cloneHidden";
 const shownStyle = "cloneReveal cloneShown";
@@ -412,13 +412,13 @@ export default function Home({
     };
     loaderTickRef.current = window.setTimeout(tick, 20);
 
-    const loadImg = (src: string) => new Promise<void>((resolve) => {
+    const loadImg = (src: string) => {
       const img = new window.Image();
       img.src = src;
-      if (img.complete) { loadedCountRef.current++; resolve(); return; }
-      img.onload = () => { loadedCountRef.current++; resolve(); };
-      img.onerror = () => { loadedCountRef.current++; resolve(); };
-    });
+      return img.decode()
+        .catch(() => {})
+        .finally(() => { loadedCountRef.current++; });
+    };
     Promise.all([...PRELOAD_SRCS].map(loadImg)).then(() => window.clearTimeout(safetyTimer));
 
     return () => {
@@ -1427,7 +1427,7 @@ export default function Home({
                   <div className="site-hero-photo-wrap">
                     <img
                       className="site-hero-photo"
-                      src="/image.png"
+                      src="/image.jpg"
                       alt={displayName}
                       loading="eager"
                       draggable={false}
@@ -1689,7 +1689,7 @@ export default function Home({
       >
         <div className="cloneLastfmCard cloneGithubCard">
           <div className="cloneGithubHeader">
-            <img className="cloneGithubAvatar" src={github?.avatarUrl ?? "/linkedin.png"} alt="" loading="lazy" />
+            <img className="cloneGithubAvatar" src={github?.avatarUrl ?? "/linkedin.jpg"} alt="" loading="lazy" />
             <div className="previewInfo">
               <p className="previewTitle">GitHub</p>
               <p className="previewMeta">@{github?.user ?? GITHUB_USER}</p>
@@ -1705,7 +1705,7 @@ export default function Home({
         style={{ top: `${linkedinPos.top}px`, left: `${linkedinPos.left}px` }}
       >
         <div className="cloneLastfmCard cloneLinkedinCard">
-          <img className="cloneLinkedinAvatar" src="/linkedin.png" alt="" loading="lazy" />
+          <img className="cloneLinkedinAvatar" src="/linkedin.jpg" alt="" loading="lazy" />
           <div className="previewInfo">
             <p className="previewTitle">LinkedIn</p>
             <p className="previewMeta">Founder @ Nix Entertainment | Media Production</p>
@@ -1721,7 +1721,7 @@ export default function Home({
               {chatMessages.some(m => m.from === "user") && chatStep !== "done" && chatRetryEmail === null && (
                 <button type="button" className="say-hi-undo-btn" onClick={handleUndo} aria-label="Undo">Undo</button>
               )}
-              <img src="/linkedin.png" alt="" className="say-hi-chat-avatar" loading="eager" />
+              <img src="/linkedin.jpg" alt="" className="say-hi-chat-avatar" loading="eager" />
               <span className="say-hi-chat-name">Daniel</span>
               <button type="button" className="say-hi-close" onClick={() => setSayHiOpen(false)} aria-label="Close">✕</button>
             </div>

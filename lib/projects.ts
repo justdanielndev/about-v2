@@ -15,7 +15,7 @@ export const projects: ProjectEntry[] = [
     type: "Media Group",
     summary: "Indie media group focused on webcomics and animated shows.",
     content: `
-<img src="/nixbanner.png" alt="Nix Entertainment" class="project-banner" />
+<img src="/nixbanner.jpg" alt="Nix Entertainment" class="project-banner" />
 <p>Nix Entertainment is a media (animation, games and other categories) studio I created with a small group of amazing people. Our mission is to entertain the world in new ways, to help make it fun and enjoyable again.</p>
 <p>Our first and current animated series is Shadowborne Chronicles. Its story follows Umbriel and Aria, two... friends? Maybe we could call it that...<br/>They unexpectedly meet, and go on a journey to fight against Zarka, the leader of the Shadow Lieutenants and main antagonist of Season 1.<br/>Across their journey they'll discover more about themselves, about their world and about their past, and maybe even learn to accept each other.</p>
 <p>We're working on Season 1 at the moment, and once the series is finished, we have some more ideas we'll work on! Stay tuned!</p>

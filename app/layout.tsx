@@ -19,14 +19,14 @@ export const metadata: Metadata = {
     description: "Developer, director, and writer from Valencia. Building projects that improve people's lives.",
     url: CANONICAL_ORIGIN,
     siteName: defaultName,
-    images: [{ url: "/linkedin.png", width: 400, height: 400, alt: defaultName }],
+    images: [{ url: "/linkedin.jpg", width: 400, height: 400, alt: defaultName }],
     type: "website"
   },
   twitter: {
     card: "summary",
     title: defaultName,
     description: "Developer, director, and writer from Valencia.",
-    images: ["/linkedin.png"]
+    images: ["/linkedin.jpg"]
   }
 };
 
@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <head>
-        <link rel="preload" as="image" href="/image.png" />
+        <link rel="preload" as="image" href="/image.jpg" />
         <link rel="preload" as="image" href="/wave.png" />
         <link rel="preload" as="image" href="/envelope.png" />
         <link rel="preload" as="image" href="/nix.png" />
