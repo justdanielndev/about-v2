@@ -1451,7 +1451,7 @@ export default function Home({
                       onFocus={openLinkedin}
                       onBlur={closeLinkedin}
                     >
-                      <img src="/linkedin.svg" alt="LinkedIn" draggable={false} />
+                      <a href="https://www.linkedin.com/in/daniel-negre/"><img src="/linkedin.svg" alt="LinkedIn" draggable={false} /></a>
                     </button>
                     <button
                       ref={githubTriggerRef as unknown as React.RefObject<HTMLButtonElement>}
@@ -1463,7 +1463,7 @@ export default function Home({
                       onFocus={() => { githubActiveTriggerRef.current = githubTriggerRef.current; openGithub(); }}
                       onBlur={closeGithub}
                     >
-                      <img src="/github.svg" alt="GitHub" draggable={false} />
+                      <a href="https://github.com/justdanielndev/"><img src="/github.svg" alt="GitHub" draggable={false} /></a>
                     </button>
                     <span className="inline-tooltip-wrapper">
                       <button
