@@ -298,8 +298,6 @@ html {
   margin-right: auto;
 }
 
-/* ── Hero ── */
-
 .site-hero {
   position: relative;
   padding: var(--space-7) var(--space-2) var(--space-6);
@@ -438,11 +436,6 @@ html {
   color: var(--fg-accent);
   font-size: 1.05rem;
 }
-
-
-
-
-/* ── Marquee ── */
 
 .site-marquee-wrap {
   position: relative;
@@ -700,6 +693,115 @@ html {
   border-radius: var(--radius-card);
   pointer-events: none;
 }
+
+.site-polaroid-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  display: none;
+  transition: top 380ms var(--ease-smooth);
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 760px) {
+  .site-polaroid-layer {
+    display: block;
+  }
+}
+
+.site-polaroid-group {
+  position: absolute;
+  inset: 0;
+}
+
+.site-polaroid {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+
+  width: fit-content;
+  background: #f5f2ea;
+  padding: 6px 6px 24px;
+  border-radius: 2px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, 10px) rotate(0deg) scale(0.78);
+  transition: transform 300ms cubic-bezier(0.55, 0, 0.8, 0.6);
+}
+
+.site-polaroid img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 128px;
+  max-height: 128px;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.site-polaroids-on .site-polaroid-group .site-polaroid,
+.site-polaroid-group-exit .site-polaroid {
+  transform: translate(calc(-50% + var(--polaroid-x)), var(--polaroid-ty))
+    rotate(var(--polaroid-r)) scale(1);
+}
+
+@keyframes site-polaroid-rise {
+  from {
+    transform: translate(-50%, 10px) rotate(0deg) scale(0.78);
+  }
+}
+
+.site-polaroids-on .site-polaroid-group-launch .site-polaroid {
+  animation: site-polaroid-rise 520ms cubic-bezier(0.24, 1.22, 0.42, 1) backwards;
+}
+
+.site-polaroids-on .site-polaroid-group-launch .site-polaroid:nth-child(2) { animation-delay: 40ms; }
+.site-polaroids-on .site-polaroid-group-launch .site-polaroid:nth-child(3) { animation-delay: 80ms; }
+.site-polaroids-on .site-polaroid-group-launch .site-polaroid:nth-child(4) { animation-delay: 120ms; }
+
+@keyframes site-polaroid-shuffle-out {
+  from {
+    transform: translate(calc(-50% + var(--polaroid-x)), var(--polaroid-ty))
+      rotate(var(--polaroid-r)) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(calc(-50% + var(--polaroid-x) - 130px), var(--polaroid-ty))
+      rotate(var(--polaroid-r)) scale(1);
+    opacity: 0;
+  }
+}
+
+.site-polaroid-group-exit .site-polaroid {
+  animation: site-polaroid-shuffle-out 380ms var(--ease-smooth) both;
+}
+
+.site-polaroid-group-exit .site-polaroid:nth-child(2) { animation-delay: 60ms; }
+.site-polaroid-group-exit .site-polaroid:nth-child(3) { animation-delay: 120ms; }
+.site-polaroid-group-exit .site-polaroid:nth-child(4) { animation-delay: 180ms; }
+
+@keyframes site-polaroid-shuffle-in {
+  from {
+    transform: translate(calc(-50% + var(--polaroid-x) + 130px), var(--polaroid-ty))
+      rotate(var(--polaroid-r)) scale(1);
+    opacity: 0;
+  }
+  to {
+    transform: translate(calc(-50% + var(--polaroid-x)), var(--polaroid-ty))
+      rotate(var(--polaroid-r)) scale(1);
+    opacity: 1;
+  }
+}
+
+.site-polaroids-on .site-polaroid-group-shuffle .site-polaroid {
+  animation: site-polaroid-shuffle-in 420ms var(--ease-smooth) backwards;
+  animation-delay: 320ms;
+}
+
+.site-polaroids-on .site-polaroid-group-shuffle .site-polaroid:nth-child(2) { animation-delay: 380ms; }
+.site-polaroids-on .site-polaroid-group-shuffle .site-polaroid:nth-child(3) { animation-delay: 440ms; }
+.site-polaroids-on .site-polaroid-group-shuffle .site-polaroid:nth-child(4) { animation-delay: 500ms; }
 
 .site-project-row {
   z-index: 1;
@@ -963,8 +1065,6 @@ html {
   }
 }
 
-/* ── Wave ── */
-
 .bio-inline-logo {
   display: inline-block;
   height: 1.1em;
@@ -1022,8 +1122,6 @@ html {
   vertical-align: -0.15em;
   object-fit: contain;
 }
-
-/* ── Say Hi modal ── */
 
 .say-hi-overlay {
   position: fixed;
@@ -1108,8 +1206,6 @@ html {
     font-size: 0.78rem;
   }
 }
-
-/* ── iMessage header: centered avatar + name ── */
 
 .say-hi-chat-header {
   display: flex;
@@ -1201,8 +1297,6 @@ html {
   .say-hi-close:hover { background: rgba(255,255,255,0.2); }
 }
 
-/* ── Chat messages ── */
-
 .say-hi-chat-area {
   flex: 1;
   overflow-y: auto;
@@ -1252,7 +1346,6 @@ html {
   border-bottom-right-radius: 4px;
 }
 
-/* consecutive same-sender: fully rounded (no tail) */
 .say-hi-msg-row:not(.new-group) .say-hi-bubble.daniel {
   border-radius: 1.1rem;
 }
@@ -1305,8 +1398,6 @@ html {
   0%, 60%, 100% { opacity: 0.35; transform: scale(1); }
   30%           { opacity: 1;    transform: scale(1.2); }
 }
-
-/* ── Input bar ── */
 
 .say-hi-input-row {
   display: flex;
@@ -1588,7 +1679,6 @@ html {
   .site-hero-photo-wrap {
     transition: none;
   }
-
 
   .cloneReveal,
   .cloneProjectHighlight,

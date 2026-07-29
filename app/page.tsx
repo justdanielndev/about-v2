@@ -1,17 +1,25 @@
 "use client";
 
 import { getDefaultName } from "@/lib/name-resolution";
+import { getSessionStatusLine } from "@/lib/status-line";
 import { projects, projectsById } from "@/lib/projects";
 import { sanitizeProjectHtml } from "@/lib/sanitize-html";
 import SiteTopBar from "@/components/site-top-bar";
 import { useRouter } from "next/navigation";
-import type { FormEvent, MouseEvent } from "react";
+import type { CSSProperties, FormEvent, MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type RowHighlight = {
   top: number;
   height: number;
   opacity: number;
+};
+
+type PolaroidGroup = {
+  key: number;
+  pics: string[];
+  mode: "launch" | "shuffle";
+  spacing: number;
 };
 
 type LastfmData = {
@@ -40,6 +48,36 @@ type ChatMsg = { id: number; from: "daniel" | "user"; text: string; time: string
 
 
 const PRELOAD_SRCS = ["/image.jpg", "/envelope.png", "/nix.png"] as const;
+
+const POLAROID_SPACING = 128;
+
+const POLAROID_SPACING_BY_PROJECT: Record<string, number> = {
+  "daydream-valencia": 104
+};
+
+function polaroidOffset(index: number, total: number, spacing: number): { x: string; ty: string; r: string } {
+  const center = (total - 1) / 2;
+  const fromCenter = index - center;
+  const arc = center === 0 ? 1 : 1 - Math.abs(fromCenter) / center;
+  return {
+    x: `${fromCenter * spacing}px`,
+    ty: `${(-168 - arc * 14).toFixed(1)}px`,
+    r: `${(fromCenter * 6.5).toFixed(1)}deg`
+  };
+}
+
+function canHover(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches
+  );
+}
+
+function polaroidsEnabled(): boolean {
+  return canHover() && window.innerWidth >= 760;
+}
+
+const POLAROID_LAYER_HEIGHT = 340;
 
 const hiddenStyle = "cloneReveal cloneHidden";
 const shownStyle = "cloneReveal cloneShown";
@@ -71,29 +109,6 @@ const MARQUEE_ORGS = [
   { name: "Yubico", img: "/yubico.png",           category: "companies" },
 ] as const;
 
-const STATUS_MESSAGES = {
-  lateNight: [
-    "Probably asleep right now :D",
-    "Zzz... It's currently night in Spain",
-    "Off the clock right now :3"
-  ],
-  morning: [
-    "Starting the day in Spain!",
-    "Goood morning everyone! :D",
-    "What's everyone up to? Morning here"
-  ],
-  midday: [
-    "It's noon in Spain! Probably taking a break :3",
-    "Probably having lunch right now :)",
-    "Working, probably :D Midday here"
-  ],
-  evening: [
-    "Go check out Nix Entertainment :3",
-    "Writing, designing, coding... I could be doing anything :)",
-    "Watch the Knights of Guinevere pilot, it's fire"
-  ]
-} as const;
-
 const VOID_CONTENT = [
   "How does all this feel? Being a mere 3 dimensional being. If you could see yourself from here...",
   "The issue with most people is that they feel like they have control over everyone else, like they know the answers for all of the questions in this world.",
@@ -113,21 +128,6 @@ const VOID_CONTENT = [
 
 function pickRandomVoidText(): string {
   return VOID_CONTENT[Math.floor(Math.random() * VOID_CONTENT.length)];
-}
-
-function getTimeBucketInSpain(now: Date = new Date()): keyof typeof STATUS_MESSAGES {
-  const hour = Number(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      hour12: false,
-      timeZone: "Europe/Madrid"
-    }).format(now)
-  );
-
-  if (hour < 6) return "lateNight";
-  if (hour < 12) return "morning";
-  if (hour < 19) return "midday";
-  return "evening";
 }
 
 function getExpression(): string {
@@ -157,13 +157,6 @@ function formatLastPlayedLabel(timestamp: number): string {
 }
 
 
-
-function getRandomStatusLine(): string {
-  const bucket = getTimeBucketInSpain();
-  const options = STATUS_MESSAGES[bucket];
-  const index = Math.floor(Math.random() * options.length);
-  return options[index];
-}
 
 function getTitleForTab(name: string, tab: "home" | "blog" | "void"): string {
   if (tab === "blog") {
@@ -226,6 +219,9 @@ export default function Home({
   const [activeProjectId, setActiveProjectId] = useState<string | null>(initialProjectId);
   const [tabPull, setTabPull] = useState(0);
   const [highlight, setHighlight] = useState<RowHighlight>({ top: 0, height: 0, opacity: 0 });
+  const [polaroidRow, setPolaroidRow] = useState<number | null>(null);
+  const [polaroidGroup, setPolaroidGroup] = useState<PolaroidGroup | null>(null);
+  const [polaroidExitGroup, setPolaroidExitGroup] = useState<PolaroidGroup | null>(null);
   const [lastfmOpen, setLastfmOpen] = useState(false);
   const [lastfmPos, setLastfmPos] = useState({ top: 0, left: 0 });
   const [lastfm, setLastfm] = useState<LastfmData | null>(null);
@@ -237,6 +233,9 @@ export default function Home({
 
   const rowContainerRef = useRef<HTMLDivElement | null>(null);
   const rowRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const polaroidExitTimerRef = useRef<number | null>(null);
+  const polaroidKeyRef = useRef(0);
+  const polaroidCardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const lastfmTriggerRef = useRef<HTMLButtonElement | null>(null);
   const lastfmCloseTimer = useRef<number | null>(null);
   const linkedinTriggerRef = useRef<HTMLElement | null>(null);
@@ -355,15 +354,7 @@ export default function Home({
       setVoidText(pickRandomVoidText());
     }
 
-    const storageKey = "site-status-line";
-    const existingStatus = window.sessionStorage.getItem(storageKey);
-    if (existingStatus) {
-      setStatusText(existingStatus);
-    } else {
-      const generated = getRandomStatusLine();
-      window.sessionStorage.setItem(storageKey, generated);
-      setStatusText(generated);
-    }
+    setStatusText(getSessionStatusLine());
 
     const fromBlogNav = window.sessionStorage.getItem("from-blog-nav");
     if (fromBlogNav) {
@@ -601,6 +592,59 @@ export default function Home({
     });
   };
 
+  const hoverProjectRow = (index: number) => {
+    revealProjectRow(index);
+
+    if (!polaroidsEnabled() || polaroidRow === index) {
+      return;
+    }
+
+    const pics = projects[index].polaroids ?? [];
+    const spacing = POLAROID_SPACING_BY_PROJECT[projects[index].id] ?? POLAROID_SPACING;
+    polaroidKeyRef.current += 1;
+
+    if (polaroidRow === null) {
+      setPolaroidGroup({ key: polaroidKeyRef.current, pics, mode: "launch", spacing });
+    } else {
+      if (polaroidExitTimerRef.current !== null) {
+        window.clearTimeout(polaroidExitTimerRef.current);
+      }
+      setPolaroidExitGroup(polaroidGroup);
+      setPolaroidGroup({ key: polaroidKeyRef.current, pics, mode: "shuffle", spacing });
+      polaroidExitTimerRef.current = window.setTimeout(() => {
+        setPolaroidExitGroup(null);
+        polaroidExitTimerRef.current = null;
+      }, 640);
+    }
+
+    setPolaroidRow(index);
+  };
+
+  const retractPolaroids = () => {
+    setPolaroidRow(null);
+
+    const cards = polaroidCardRefs.current.filter((el): el is HTMLDivElement => el !== null);
+    if (cards.length === 0) {
+      return;
+    }
+
+    const frozen = cards.map((el) => getComputedStyle(el).transform);
+    cards.forEach((el, i) => {
+      el.style.animation = "none";
+      el.style.transition = "none";
+      el.style.transform = frozen[i] === "none" ? "" : frozen[i];
+    });
+
+    void cards[0].offsetHeight;
+
+    requestAnimationFrame(() => {
+      cards.forEach((el, i) => {
+        el.style.transition = `transform 300ms cubic-bezier(0.55, 0, 0.8, 0.6) ${i * 35}ms`;
+        el.style.transform = "translate(-50%, 10px) rotate(0deg) scale(0.78)";
+      });
+    });
+  };
+
   const revealProjectById = (projectId: string) => {
     const index = projects.findIndex((project) => project.id === projectId);
     if (index >= 0) {
@@ -826,6 +870,7 @@ export default function Home({
   };
 
   const startMarqueeTracking = () => {
+    if (!canHover()) return;
     if (marqueeMinWaitTimer.current !== null) { window.clearTimeout(marqueeMinWaitTimer.current); marqueeMinWaitTimer.current = null; }
     if (marqueeLeaveTimer.current !== null) { window.clearTimeout(marqueeLeaveTimer.current); marqueeLeaveTimer.current = null; }
     marqueePendingLeave.current = false;
@@ -1327,7 +1372,54 @@ export default function Home({
   const renderProjectsSection = () => (
     <section className="site-projects">
       <h2 className="site-projects-title">Projects</h2>
-      <div className="site-project-rows" ref={rowContainerRef} onMouseLeave={hideProjectRowHighlight}>
+      <div
+        className={`site-project-rows${polaroidRow !== null ? " site-polaroids-on" : ""}`}
+        ref={rowContainerRef}
+        onMouseLeave={() => {
+          hideProjectRowHighlight();
+          retractPolaroids();
+        }}
+      >
+        <div
+          className="site-polaroid-layer"
+          aria-hidden="true"
+          style={{
+            top: `${highlight.top - POLAROID_LAYER_HEIGHT}px`,
+            height: `${POLAROID_LAYER_HEIGHT}px`
+          }}
+        >
+          {[polaroidExitGroup, polaroidGroup].map((group) =>
+            group ? (
+              <div
+                key={group.key}
+                className={`site-polaroid-group ${
+                  group === polaroidExitGroup
+                    ? "site-polaroid-group-exit"
+                    : `site-polaroid-group-${group.mode}`
+                }`}
+              >
+                {group.pics.map((src, index) => {
+                  const offset = polaroidOffset(index, group.pics.length, group.spacing);
+                  const isMainGroup = group === polaroidGroup;
+                  return (
+                    <div
+                      key={`${group.key}-${src}-${index}`}
+                      className="site-polaroid"
+                      ref={isMainGroup ? (node) => { polaroidCardRefs.current[index] = node; } : undefined}
+                      style={{
+                        "--polaroid-x": offset.x,
+                        "--polaroid-ty": offset.ty,
+                        "--polaroid-r": offset.r
+                      } as CSSProperties}
+                    >
+                      <img src={src} alt="" draggable={false} />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null
+          )}
+        </div>
         <div
           className="site-project-row-highlight cloneProjectHighlight"
           style={{
@@ -1353,10 +1445,11 @@ export default function Home({
             }}
             onClick={(event) => {
               event.preventDefault();
+              retractPolaroids();
               openProjectPage(id);
             }}
-            onMouseEnter={() => revealProjectRow(index)}
-            onFocus={() => revealProjectRow(index)}
+            onMouseEnter={() => hoverProjectRow(index)}
+            onFocus={() => hoverProjectRow(index)}
           >
             <span className="site-col-year">{year}</span>
             <span className="site-col-sep" aria-hidden="true" />
@@ -1490,7 +1583,7 @@ export default function Home({
                   </div>
                 </div>
                 <p className="site-hero-desc">
-                  Hey there! <img src="/wave.png" alt="👋" className="site-hero-wave" draggable={false} /> I'm <b className="font-bold text-[##99c7e8]">{displayName}</b>, a director, writer, developer... Overall, I make projects that are designed to improve people's lives.
+                  Hey there! <img src="/wave.png" alt="👋" className="site-hero-wave" draggable={false} /> I'm <b className="font-bold text-[##99c7e8]">{displayName}</b>, a director, writer, developer... Overall, I make projects that are designed to improve people's lives. Right now I'm working on an open source app update server called <img src="/pawprint.png" alt="Pawprint logo" className="bio-inline-logo bio-inline-nix" draggable={false} /><b className="font-bold text-[##99c7e8]">Pawprint</b>.
                 </p>
                 <p className="site-hero-bio-p">
                   In addition to this, I am the Founder and Chief Director of<br/>{" "}
@@ -1512,7 +1605,7 @@ export default function Home({
                       <img src="/shadowborne-white.png" alt="Shadowborne Chronicles" className="bio-inline-logo bio-inline-logo-wide shadowborne-white" draggable={false} aria-hidden="true" />
                     </span>
                   </a>
-                  , a fantasy animated series that I'm proudly directing. We also have some secret stuff in the works that I can't talk about yet, but stay tuned!
+                  , a fantasy animated series that I'm proudly directing. There's also some secret stuff in the works that I can't talk about yet, but stay tuned!
                 </p>
               </section>
 

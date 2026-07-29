@@ -1,6 +1,7 @@
 "use client";
 
 import { getDefaultName } from "@/lib/name-resolution";
+import { getSessionStatusLine } from "@/lib/status-line";
 import SiteTopBar from "@/components/site-top-bar";
 import { usePathname, useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
@@ -13,55 +14,10 @@ type TopBarProps = {
 const ROUTE_NAV_DELAY_MS = 220;
 const INTERNAL_NAV_KEY = "site-internal-nav";
 
-const STATUS_MESSAGES = {
-  lateNight: [
-    "Probably asleep right now :D",
-    "Zzz... It's currently night in Spain",
-    "Off the clock right now :3"
-  ],
-  morning: [
-    "Starting the day in Spain!",
-    "Goood morning everyone! :D",
-    "What's everyone up to? Morning here"
-  ],
-  midday: [
-    "It's noon in Spain! Probably taking a break :3",
-    "Probably having lunch right now :)",
-    "Working, probably :D Midday here"
-  ],
-  evening: [
-    "Go check out Nix Entertainment :3",
-    "Writing, designing, coding... I could be doing anything :)",
-    "Watch the Knights of Guinevere pilot, it's fire"
-  ]
-} as const;
-
 function tabIndex(tab: "home" | "blog" | "void"): number {
   if (tab === "home") return 0;
   if (tab === "blog") return 1;
   return 2;
-}
-
-function getTimeBucketInSpain(now: Date = new Date()): keyof typeof STATUS_MESSAGES {
-  const hour = Number(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      hour12: false,
-      timeZone: "Europe/Madrid"
-    }).format(now)
-  );
-
-  if (hour < 6) return "lateNight";
-  if (hour < 12) return "morning";
-  if (hour < 19) return "midday";
-  return "evening";
-}
-
-function getRandomStatusLine(): string {
-  const bucket = getTimeBucketInSpain();
-  const options = STATUS_MESSAGES[bucket];
-  const index = Math.floor(Math.random() * options.length);
-  return options[index];
 }
 
 export default function TopBar({ active }: TopBarProps) {
@@ -78,16 +34,7 @@ export default function TopBar({ active }: TopBarProps) {
   const navTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const storageKey = "site-status-line";
-    const existing = window.sessionStorage.getItem(storageKey);
-    if (existing) {
-      setStatusText(existing);
-      return;
-    }
-
-    const generated = getRandomStatusLine();
-    window.sessionStorage.setItem(storageKey, generated);
-    setStatusText(generated);
+    setStatusText(getSessionStatusLine());
   }, []);
 
   useEffect(() => {

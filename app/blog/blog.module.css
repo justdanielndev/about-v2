@@ -124,7 +124,6 @@
   padding: 2rem 0 1rem;
 }
 
-/* Article layout: mirror the provided structure */
 .container {
   box-sizing: border-box;
   display: grid;
@@ -403,7 +402,6 @@
   font-size: 0.75rem;
 }
 
-/* Sidebar / TOC styles from the reference */
 .tableOfContents nav {
   position: relative;
 }
