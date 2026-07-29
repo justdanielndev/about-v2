@@ -421,6 +421,44 @@ export default function Home({
   }, [standaloneProjectRoute]);
 
   useEffect(() => {
+    if (!polaroidsEnabled()) {
+      return;
+    }
+    const srcs = Array.from(new Set(projects.flatMap((project) => project.polaroids ?? [])));
+    if (srcs.length === 0) {
+      return;
+    }
+
+    const warm = () => {
+      for (const src of srcs) {
+        const img = new window.Image();
+        img.src = src;
+      }
+    };
+
+    const ric = (window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    }).requestIdleCallback;
+
+    let idleId: number;
+    if (typeof ric === "function") {
+      idleId = ric(warm, { timeout: 3000 });
+    } else {
+      idleId = window.setTimeout(warm, 1200);
+    }
+
+    return () => {
+      const cic = (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      if (typeof cic === "function") {
+        cic(idleId);
+      } else {
+        window.clearTimeout(idleId);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (tabTransitionRef.current !== null) {
         window.clearTimeout(tabTransitionRef.current);
