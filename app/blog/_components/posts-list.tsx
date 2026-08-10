@@ -127,7 +127,7 @@ export default function PostsList({ posts }: PostsListProps) {
 
         <div className="site-project-row site-project-row-header">
           <span className={`site-col-year ${styles.blogYearColumn}`}>Year</span>
-          <span className="site-col-sep" aria-hidden="true" />
+          <span className="site-col-sep" aria-hidden="true"> </span>
           <span className="site-col-name">Article</span>
           <span className={`site-col-type ${styles.blogPublishedColumn}`}>Published</span>
         </div>
@@ -150,7 +150,7 @@ export default function PostsList({ posts }: PostsListProps) {
               onClick={(event) => handlePostNavigate(event, href)}
             >
               <span className={`site-col-year ${styles.blogYearColumn}`}>{published.year}</span>
-              <span className="site-col-sep" aria-hidden="true" />
+              <span className="site-col-sep" aria-hidden="true"> </span>
               <span className={`site-col-name ${styles.blogNameColumn}`}>
                 <span className={styles.blogPostTitle}>{post.title}</span>
                 <span className={styles.blogPostDescription}>{post.description || post.excerpt}</span>

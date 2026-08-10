@@ -1,3 +1,5 @@
+import { getImageCaption } from "@/lib/entry-images";
+
 export type ProjectEntry = {
   id: string;
   year: string;
@@ -15,13 +17,13 @@ export const projects: ProjectEntry[] = [
     name: "Nix Entertainment",
     type: "Media Group",
     summary: "Indie media group focused on webcomics and animated shows.",
-    polaroids: ["/nix1.jpg", "/nix2.jpg", "/nix3.jpg", "/nix4.jpg"],
+    polaroids: ["/nix1.jpg", "/nix-umbriel-reveal.jpg", "/nix-aria-reveal.jpg", "/nix-zarka-reveal.jpg"],
     content: `
-<img src="/nixbanner.jpg" alt="Nix Entertainment" class="project-banner" />
+<img src="/nix-entertainment-banner.jpg" alt="${getImageCaption("/nix-entertainment-banner.jpg")}" class="project-banner" />
 <p>Nix Entertainment is a media (animation, games and other categories) studio I created with a small group of amazing people. Our mission is to entertain the world in new ways, to help make it fun and enjoyable again.</p>
-<p>Our first and current animated series is Shadowborne Chronicles. Its story follows Umbriel and Aria, two... friends? Maybe we could call it that...<br/>They unexpectedly meet, and go on a journey to fight against Zarka, the leader of the Shadow Lieutenants and main antagonist of Season 1.<br/>Across their journey they'll discover more about themselves, about their world and about their past, and maybe even learn to accept each other.</p>
-<p>We're working on Season 1 at the moment, and once the series is finished, we have some more ideas we'll work on! Stay tuned!</p>
-<p>If you want to know more about Nix Entertainment, check it out <a href="https://nixentertainment.com" target="_blank" rel="noopener noreferrer">here</a>!</p>
+<p>Our first and current animated series is Shadowborne Chronicles. Its story follows <a href="/work/shadowborne-characters">Umbriel and Aria</a>, two... friends? Maybe we could call it that...<br/>They unexpectedly meet, and go on a journey to fight against Zarka, the leader of the Shadow Lieutenants and main antagonist of Season One.<br/>Across their journey they'll discover more about themselves, about their world and about their past, and maybe even learn to accept each other.</p>
+<p>We're working on Season One at the moment, and once the series is finished, we have some more ideas we'll work on! Stay tuned!</p>
+<p>If you want to know more about Nix Entertainment, check it out <a href="https://nixentertainment.com" target="_blank">here</a>!</p>
     `.trim()
   },
   {
@@ -44,9 +46,9 @@ export const projects: ProjectEntry[] = [
     name: "Daydream Valencia",
     type: "Game Jam",
     summary: "Spain's largest teen Game Jam ever.",
-    polaroids: ["/daydream1.jpg", "/daydream2.jpg", "/daydream3.jpg", "/daydream4.jpg"],
+    polaroids: ["/daydream-valencia-blue-room.jpg", "/daydream-valencia-daniel-mentoring.jpg", "/daydream-valencia-gathering.jpg", "/daydream-valencia-red-room.jpg"],
     content: `
-<img src="/daydreambanner.jpg" alt="Daydream Valencia" class="project-banner" />
+<img src="/daydream-valencia-banner.jpg" alt="${getImageCaption("/daydream-valencia-banner.jpg")}" class="project-banner" />
 <p>In 2025 I had the pleasure of organising <a href="https://daydream.hackclub.com/valencia" target="_blank" rel="noopener noreferrer">Daydream Valencia</a>, the largest Game Jam ever for students under 18 in Spain. It was an amazing experience working with Hack Club and our team to create such a fun environment, and all the projects were amazing!</p>
 <p>Everyone had an incredible time, and I was so happy to see the creativity and talent of all the participants. We had a lot of fun, and got sponsors like Yubico, AVAST, Hack Club (of course, they were co-organizers after all).</p>
 <p>I hope to organise more events like this in the future (who knows, maybe a "mediathon" with Nix Entertainment?).</p>
@@ -58,9 +60,9 @@ export const projects: ProjectEntry[] = [
     name: "SoundChestAI (The Challenge 2025)",
     type: "Competition",
     summary: "AI stethoscope prototype for anomaly detection in lung sounds.",
-    polaroids: ["/challenge1.jpg", "/challenge2.jpg", "/challenge3.jpg", "/challenge4.jpg"],
+    polaroids: ["/soundchestai-challenge-meeting.jpg", "/soundchestai-challenge-indoors.jpg", "/soundchestai-challenge-photo-backdrop.jpg", "/soundchestai-challenge-matching-shirts.jpg"],
     content: `
-<img src="/challengebanner.jpg" alt="SoundChestAI — The Challenge 2025" class="project-banner" />
+<img src="/soundchestai-challenge-outdoors.jpg" alt="${getImageCaption("/soundchestai-challenge-outdoors.jpg")}" class="project-banner" />
 <p>In 2025, my team and I participated in The Challenge, a competition aimed at creating projects that helped fulfill the purposes of the SDGs. Our project, SoundChestAI, was a digital stethoscope that used AI to help detect possible illnesses in the respiratory system by analyzing sounds with a custom AI model built by me.</p>
 <p>Out of 3000+ participants, our team was selected to present in Barcelona. We got to showcase the project to hundreds of people around the country and see what others were building across the competition. Everyone was very friendly, and we had a great time!</p>
     `.trim()
@@ -71,9 +73,9 @@ export const projects: ProjectEntry[] = [
     name: "goCalp Project Proposal",
     type: "Competition",
     summary: "Horizontal and vertical pop-up garden corridors, inspired by the native microbiome and flora.",
-    polaroids: ["/gocalp1.jpg", "/gocalp2.jpg", "/gocalp3.jpg"],
+    polaroids: ["/gocalp-project-graph-present.jpg", "/gocalp-first-prize.jpg", "/gocalp3.jpg"],
     content: `
-<img src="/gocalpbanner.jpg" alt="goCalp" class="project-banner" />
+<img src="/gocalp-project-main-presentation.jpg" alt="${getImageCaption("/gocalp-project-main-presentation.jpg")}" class="project-banner" />
 <p>In 2024 I won the "goCalp" competition created by Global Omnium, which asked participants to find innovative solutions for cities around the world. My proposal was to create horizontal and vertical pop-up garden corridors, with native microbiome and flora, to enhance biodiversity and provide green spaces for residents and wildlife.</p>
 <p>The best projects competed in Calpe, and mine was awarded first prize! It was even announced that my idea would be implemented in the future.</p>
 <p>I keep coming back to SDG-focused competitions, I guess there are a lot of problems worth solving!</p>

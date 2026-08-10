@@ -7,10 +7,14 @@ import { sanitizeProjectHtml } from "@/lib/sanitize-html";
 import SiteTopBar from "@/components/site-top-bar";
 import { useRouter } from "next/navigation";
 import type { CSSProperties, FormEvent, MouseEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { works, workById } from "@/lib/work";
+import { getImageCaption } from "@/lib/entry-images";
 
 type RowHighlight = {
   top: number;
+  left: number;
+  width: number;
   height: number;
   opacity: number;
 };
@@ -47,7 +51,7 @@ type ChatStep = "idle" | "opening" | "name" | "name-sent" | "message" | "message
 type ChatMsg = { id: number; from: "daniel" | "user"; text: string; time: string };
 
 
-const PRELOAD_SRCS = ["/image.jpg", "/envelope.png", "/nix.png"] as const;
+const PRELOAD_SRCS = ["/daniel-negre-photo.jpg", "/envelope.png", "/nix.png"] as const;
 
 const POLAROID_SPACING = 128;
 
@@ -218,10 +222,14 @@ export default function Home({
   const [voidTextVisible, setVoidTextVisible] = useState(true);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(initialProjectId);
   const [tabPull, setTabPull] = useState(0);
-  const [highlight, setHighlight] = useState<RowHighlight>({ top: 0, height: 0, opacity: 0 });
-  const [polaroidRow, setPolaroidRow] = useState<number | null>(null);
-  const [polaroidGroup, setPolaroidGroup] = useState<PolaroidGroup | null>(null);
-  const [polaroidExitGroup, setPolaroidExitGroup] = useState<PolaroidGroup | null>(null);
+  const [projectsHighlight, setProjectsHighlight] = useState<RowHighlight>({ top: 0, left: 0, width: 0, height: 0, opacity: 0 });
+  const [worksHighlight, setWorksHighlight] = useState<RowHighlight>({ top: 0, left: 0, width: 0, height: 0, opacity: 0 });
+  const [projectsPolaroidRow, setProjectsPolaroidRow] = useState<number | null>(null);
+  const [worksPolaroidRow, setWorksPolaroidRow] = useState<number | null>(null);
+  const [projectsPolaroidGroup, setProjectsPolaroidGroup] = useState<PolaroidGroup | null>(null);
+  const [worksPolaroidGroup, setWorksPolaroidGroup] = useState<PolaroidGroup | null>(null);
+  const [projectsPolaroidExitGroup, setProjectsPolaroidExitGroup] = useState<PolaroidGroup | null>(null);
+  const [worksPolaroidExitGroup, setWorksPolaroidExitGroup] = useState<PolaroidGroup | null>(null);
   const [lastfmOpen, setLastfmOpen] = useState(false);
   const [lastfmPos, setLastfmPos] = useState({ top: 0, left: 0 });
   const [lastfm, setLastfm] = useState<LastfmData | null>(null);
@@ -231,11 +239,14 @@ export default function Home({
   const [githubPos, setGithubPos] = useState({ top: 0, left: 0 });
   const [github, setGithub] = useState<GithubData | null>(null);
 
-  const rowContainerRef = useRef<HTMLDivElement | null>(null);
-  const rowRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const projectsRowContainerRef = useRef<HTMLDivElement | null>(null);
+  const worksRowContainerRef = useRef<HTMLDivElement | null>(null);
+  const projectRowRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const workRowRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const polaroidExitTimerRef = useRef<number | null>(null);
   const polaroidKeyRef = useRef(0);
-  const polaroidCardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const projectPolaroidCardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const workPolaroidCardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const lastfmTriggerRef = useRef<HTMLButtonElement | null>(null);
   const lastfmCloseTimer = useRef<number | null>(null);
   const linkedinTriggerRef = useRef<HTMLElement | null>(null);
@@ -282,6 +293,14 @@ export default function Home({
     if (projectPathMatch?.[1]) {
       const candidate = decodeURIComponent(projectPathMatch[1]);
       if (projectsById[candidate]) {
+        projectId = candidate;
+      }
+    }
+
+    const workPathMatch = currentUrl.pathname.match(/^\/work\/([^/]+)$/);
+    if (workPathMatch?.[1] && !projectId) {
+      const candidate = decodeURIComponent(workPathMatch[1]);
+      if (workById[candidate]) {
         projectId = candidate;
       }
     }
@@ -473,8 +492,9 @@ export default function Home({
   }, []);
 
   useEffect(() => {
-    if (activeProjectId && projectsById[activeProjectId]) {
-      document.title = `${displayName} (${projectsById[activeProjectId].name})`;
+    const activeEntry = activeProjectId ? (projectsById[activeProjectId] ?? workById[activeProjectId] ?? null) : null;
+    if (activeEntry) {
+      document.title = `${displayName} (${activeEntry.name})`;
       return;
     }
     document.title = getTitleForTab(displayName, activeTopTab);
@@ -612,9 +632,9 @@ export default function Home({
     };
   }, [githubOpen]);
 
-  const revealProjectRow = (index: number) => {
-    const container = rowContainerRef.current;
-    const row = rowRefs.current[index];
+  const revealProjectRow = (index: number, section: "projects" | "work") => {
+    const container = section === "projects" ? projectsRowContainerRef.current : worksRowContainerRef.current;
+    const row = section === "projects" ? projectRowRefs.current[index] : workRowRefs.current[index];
 
     if (!container || !row) {
       return;
@@ -623,45 +643,93 @@ export default function Home({
     const containerRect = container.getBoundingClientRect();
     const rowRect = row.getBoundingClientRect();
 
-    setHighlight({
+    if (section === "projects") {
+      setProjectsHighlight({
+        top: rowRect.top - containerRect.top,
+        left: rowRect.left - containerRect.left,
+        width: rowRect.width,
+        height: rowRect.height,
+        opacity: 1
+      });
+      return;
+    }
+
+    setWorksHighlight({
       top: rowRect.top - containerRect.top,
+      left: rowRect.left - containerRect.left,
+      width: rowRect.width,
       height: rowRect.height,
       opacity: 1
     });
   };
 
-  const hoverProjectRow = (index: number) => {
-    revealProjectRow(index);
+  const hoverProjectRow = (index: number, section: "projects" | "work") => {
+    revealProjectRow(index, section);
 
-    if (!polaroidsEnabled() || polaroidRow === index) {
+    if (section === "work") {
       return;
     }
 
-    const pics = projects[index].polaroids ?? [];
-    const spacing = POLAROID_SPACING_BY_PROJECT[projects[index].id] ?? POLAROID_SPACING;
+    const items = section === "projects" ? projects : works;
+    const currentPolaroidRow = section === "projects" ? projectsPolaroidRow : worksPolaroidRow;
+    const setPolaroidRowState = section === "projects" ? setProjectsPolaroidRow : setWorksPolaroidRow;
+    const currentPolaroidGroup = section === "projects" ? projectsPolaroidGroup : worksPolaroidGroup;
+    const setPolaroidGroupState = section === "projects" ? setProjectsPolaroidGroup : setWorksPolaroidGroup;
+    const setPolaroidExitGroupState = section === "projects" ? setProjectsPolaroidExitGroup : setWorksPolaroidExitGroup;
+
+    if (!polaroidsEnabled() || currentPolaroidRow === index) {
+      return;
+    }
+
+    const pics = items[index].polaroids ?? [];
+    const spacing = POLAROID_SPACING_BY_PROJECT[items[index].id] ?? POLAROID_SPACING;
     polaroidKeyRef.current += 1;
 
-    if (polaroidRow === null) {
-      setPolaroidGroup({ key: polaroidKeyRef.current, pics, mode: "launch", spacing });
+    if (currentPolaroidRow === null) {
+      setPolaroidGroupState({ key: polaroidKeyRef.current, pics, mode: "launch", spacing });
     } else {
       if (polaroidExitTimerRef.current !== null) {
         window.clearTimeout(polaroidExitTimerRef.current);
       }
-      setPolaroidExitGroup(polaroidGroup);
-      setPolaroidGroup({ key: polaroidKeyRef.current, pics, mode: "shuffle", spacing });
+      setPolaroidExitGroupState(currentPolaroidGroup);
+      setPolaroidGroupState({ key: polaroidKeyRef.current, pics, mode: "shuffle", spacing });
       polaroidExitTimerRef.current = window.setTimeout(() => {
-        setPolaroidExitGroup(null);
+        setPolaroidExitGroupState(null);
         polaroidExitTimerRef.current = null;
       }, 640);
     }
 
-    setPolaroidRow(index);
+    setPolaroidRowState(index);
   };
 
-  const retractPolaroids = () => {
-    setPolaroidRow(null);
+  const retractPolaroids = (section: "projects" | "work") => {
+    if (section === "projects") {
+      setProjectsPolaroidRow(null);
+      const cards = projectPolaroidCardRefs.current.filter((el): el is HTMLDivElement => el !== null);
+      if (cards.length === 0) {
+        return;
+      }
 
-    const cards = polaroidCardRefs.current.filter((el): el is HTMLDivElement => el !== null);
+      const frozen = cards.map((el) => getComputedStyle(el).transform);
+      cards.forEach((el, i) => {
+        el.style.animation = "none";
+        el.style.transition = "none";
+        el.style.transform = frozen[i] === "none" ? "" : frozen[i];
+      });
+
+      void cards[0].offsetHeight;
+
+      requestAnimationFrame(() => {
+        cards.forEach((el, i) => {
+          el.style.transition = `transform 300ms cubic-bezier(0.55, 0, 0.8, 0.6) ${i * 35}ms`;
+          el.style.transform = "translate(-50%, 10px) rotate(0deg) scale(0.78)";
+        });
+      });
+      return;
+    }
+
+    setWorksPolaroidRow(null);
+    const cards = workPolaroidCardRefs.current.filter((el): el is HTMLDivElement => el !== null);
     if (cards.length === 0) {
       return;
     }
@@ -683,19 +751,24 @@ export default function Home({
     });
   };
 
-  const revealProjectById = (projectId: string) => {
-    const index = projects.findIndex((project) => project.id === projectId);
+  const revealProjectById = (projectId: string, section: "projects" | "work") => {
+    const items = section === "projects" ? projects : works;
+    const index = items.findIndex((item) => item.id === projectId);
     if (index >= 0) {
-      revealProjectRow(index);
+      revealProjectRow(index, section);
     }
   };
 
-  const hideProjectRowHighlight = () => {
+  const hideProjectRowHighlight = (section: "projects" | "work") => {
     if (activeProjectId) {
-      revealProjectById(activeProjectId);
+      revealProjectById(activeProjectId, section);
       return;
     }
-    setHighlight((current) => ({ ...current, opacity: 0 }));
+    if (section === "projects") {
+      setProjectsHighlight((current) => ({ ...current, opacity: 0 }));
+      return;
+    }
+    setWorksHighlight((current) => ({ ...current, opacity: 0 }));
   };
 
   const openLastfm = () => {
@@ -838,6 +911,7 @@ export default function Home({
     }
     tabTransitionRef.current = window.setTimeout(() => {
       updater();
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       if (imageSrcs && imageSrcs.length > 0) {
         setLoaderDone(false);
         setLoaderProgress(0);
@@ -992,18 +1066,18 @@ export default function Home({
     }
   };
 
-  const openProjectPage = (projectId: string) => {
-    if (!projectsById[projectId]) {
+  const openProjectPage = (projectId: string, route: "project" | "work" = "project") => {
+    const entry = projectsById[projectId] ?? workById[projectId];
+    if (!entry) {
       return;
     }
     if (projectId === activeProjectId) {
       return;
     }
 
-    const project = projectsById[projectId];
-    if (typeof document !== "undefined" && project?.content) {
+    if (typeof document !== "undefined" && entry.content) {
       const tmp = document.createElement("div");
-      tmp.innerHTML = project.content;
+      tmp.innerHTML = entry.content;
       const added: HTMLLinkElement[] = [];
       tmp.querySelectorAll("img[src]").forEach((img) => {
         const src = img.getAttribute("src");
@@ -1025,7 +1099,7 @@ export default function Home({
     params.delete("project");
     params.delete("tab");
     const query = params.toString();
-    const nextUrl = `/project/${encodeURIComponent(projectId)}${query ? `?${query}` : ""}`;
+    const nextUrl = `/${route}/${encodeURIComponent(projectId)}${query ? `?${query}` : ""}`;
     window.history.pushState({}, "", nextUrl);
 
     setTabPull(0);
@@ -1034,7 +1108,7 @@ export default function Home({
     setLinkedinOpen(false);
 
     const projectImgSrcs: string[] = [];
-    const projectContent = projectsById[projectId]?.content;
+    const projectContent = entry.content;
     if (projectContent && typeof document !== "undefined") {
       const tmp = document.createElement("div");
       tmp.innerHTML = projectContent;
@@ -1061,7 +1135,8 @@ export default function Home({
     animateContentSwitch(() => {
       setActiveProjectId(null);
       setActiveTopTab("home");
-      setHighlight((current) => ({ ...current, opacity: 0 }));
+      setProjectsHighlight((current) => ({ ...current, opacity: 0 }));
+      setWorksHighlight((current) => ({ ...current, opacity: 0 }));
     });
   };
 
@@ -1081,7 +1156,8 @@ export default function Home({
     animateContentSwitch(() => {
       setActiveProjectId(null);
       setActiveTopTab("home");
-      setHighlight((current) => ({ ...current, opacity: 0 }));
+      setProjectsHighlight((current) => ({ ...current, opacity: 0 }));
+      setWorksHighlight((current) => ({ ...current, opacity: 0 }));
     });
   };
 
@@ -1176,7 +1252,8 @@ export default function Home({
       }
       setActiveTopTab(nextTab);
       if (nextTab === "home") {
-        setHighlight((current) => ({ ...current, opacity: 0 }));
+        setProjectsHighlight((current) => ({ ...current, opacity: 0 }));
+        setWorksHighlight((current) => ({ ...current, opacity: 0 }));
       }
     });
   };
@@ -1194,7 +1271,7 @@ export default function Home({
     }
 
     requestAnimationFrame(() => {
-      revealProjectById(activeProjectId);
+      revealProjectById(activeProjectId, activeProjectId && workById[activeProjectId] ? "work" : "projects");
     });
   }, [activeProjectId, contentVisible]);
 
@@ -1365,7 +1442,8 @@ export default function Home({
   const activeTabIndex = tabIndex(activeTopTab);
   const indicatorTab = activeProjectId ? (hoverTopTab ?? lastIndicatorTab) : visualTopTab;
   const indicatorVisible = activeProjectId ? hoverTopTab !== null : true;
-  const currentProject = activeProjectId ? projectsById[activeProjectId] : null;
+  const currentProject = activeProjectId ? (projectsById[activeProjectId] ?? workById[activeProjectId] ?? null) : null;
+  const activeEntryIsWork = Boolean(activeProjectId && workById[activeProjectId]);
   const homeTabActive = !activeProjectId && visualTopTab === "home";
   const blogTabActive = !activeProjectId && visualTopTab === "blog";
   const voidTabActive = !activeProjectId && visualTopTab === "void";
@@ -1409,41 +1487,41 @@ export default function Home({
 
   const renderProjectsSection = () => (
     <section className="site-projects">
-      <h2 className="site-projects-title">Projects</h2>
+      <h2 className="site-projects-title">Featured Projects</h2>
       <div
-        className={`site-project-rows${polaroidRow !== null ? " site-polaroids-on" : ""}`}
-        ref={rowContainerRef}
+        className={`site-project-rows${projectsPolaroidRow !== null ? " site-polaroids-on" : ""}`}
+        ref={projectsRowContainerRef}
         onMouseLeave={() => {
-          hideProjectRowHighlight();
-          retractPolaroids();
+          hideProjectRowHighlight("projects");
+          retractPolaroids("projects");
         }}
       >
         <div
           className="site-polaroid-layer"
           aria-hidden="true"
           style={{
-            top: `${highlight.top - POLAROID_LAYER_HEIGHT}px`,
+            top: `${projectsHighlight.top - POLAROID_LAYER_HEIGHT}px`,
             height: `${POLAROID_LAYER_HEIGHT}px`
           }}
         >
-          {[polaroidExitGroup, polaroidGroup].map((group) =>
+          {[projectsPolaroidExitGroup, projectsPolaroidGroup].map((group) =>
             group ? (
               <div
                 key={group.key}
                 className={`site-polaroid-group ${
-                  group === polaroidExitGroup
+                  group === projectsPolaroidExitGroup
                     ? "site-polaroid-group-exit"
                     : `site-polaroid-group-${group.mode}`
                 }`}
               >
                 {group.pics.map((src, index) => {
                   const offset = polaroidOffset(index, group.pics.length, group.spacing);
-                  const isMainGroup = group === polaroidGroup;
+                  const isMainGroup = group === projectsPolaroidGroup;
                   return (
                     <div
                       key={`${group.key}-${src}-${index}`}
                       className="site-polaroid"
-                      ref={isMainGroup ? (node) => { polaroidCardRefs.current[index] = node; } : undefined}
+                      ref={isMainGroup ? (node) => { projectPolaroidCardRefs.current[index] = node; } : undefined}
                       style={{
                         "--polaroid-x": offset.x,
                         "--polaroid-ty": offset.ty,
@@ -1461,40 +1539,150 @@ export default function Home({
         <div
           className="site-project-row-highlight cloneProjectHighlight"
           style={{
-            top: `${highlight.top}px`,
-            height: `${highlight.height}px`,
-            opacity: highlight.opacity
+            top: `${projectsHighlight.top}px`,
+            height: `${projectsHighlight.height}px`,
+            opacity: projectsHighlight.opacity
           }}
         />
         <div className="site-project-row site-project-row-header">
           <span className="site-col-year">Year</span>
-          <span className="site-col-sep" aria-hidden="true" />
+          <span className="site-col-sep" aria-hidden="true"> </span>
           <span className="site-col-name">Project</span>
           <span className="site-col-type">Type</span>
         </div>
-        {projects.map(({ id, year, name, type }, index) => (
-          <a
-            key={id}
-            href={`/project/${id}`}
-            title={`${name} | ${type} (${year})`}
-            className="site-project-row"
-            ref={(node) => {
-              rowRefs.current[index] = node;
-            }}
-            onClick={(event) => {
-              event.preventDefault();
-              retractPolaroids();
-              openProjectPage(id);
-            }}
-            onMouseEnter={() => hoverProjectRow(index)}
-            onFocus={() => hoverProjectRow(index)}
-          >
-            <span className="site-col-year">{year}</span>
-            <span className="site-col-sep" aria-hidden="true" />
-            <span className="site-col-name">{name}</span>
-            <span className="site-col-type">{type}</span>
-          </a>
+        {projects.map(({ id, year, name, type, polaroids }, index) => (
+          <Fragment key={id}>
+            <a
+              href={`/project/${id}`}
+              title={`${name} | ${type} (${year})`}
+              className="site-project-row"
+              ref={(node) => {
+                projectRowRefs.current[index] = node;
+              }}
+              onClick={(event) => {
+                event.preventDefault();
+                retractPolaroids("projects");
+                openProjectPage(id, "project");
+              }}
+              onMouseEnter={() => hoverProjectRow(index, "projects")}
+              onFocus={() => hoverProjectRow(index, "projects")}
+            >
+              <span className="site-col-year">{year}</span>
+              <span className="site-col-sep" aria-hidden="true"> </span>
+              <span className="site-col-name">{name}</span>
+              <span className="site-col-type">{type}</span>
+            </a>
+            {polaroids && polaroids.length > 0 ? (
+              <noscript>
+                {polaroids.map((src) => (
+                  <img key={src} src={src} alt={getImageCaption(src) ?? `${name} photo`} />
+                ))}
+              </noscript>
+            ) : null}
+          </Fragment>
         ))}
+      </div>
+    </section>
+  );
+
+  const renderWorkSection = () => (
+    <section className="site-projects site-projects-work">
+      <h2 className="site-projects-title">Individual Creations</h2>
+      <div
+        className={`site-project-rows${worksPolaroidRow !== null ? " site-polaroids-on" : ""}`}
+        ref={worksRowContainerRef}
+        onMouseLeave={() => {
+          hideProjectRowHighlight("work");
+          retractPolaroids("work");
+        }}
+      >
+        <div
+          className="site-polaroid-layer"
+          aria-hidden="true"
+          style={{
+            top: `${worksHighlight.top - POLAROID_LAYER_HEIGHT}px`,
+            height: `${POLAROID_LAYER_HEIGHT}px`
+          }}
+        >
+          {[worksPolaroidExitGroup, worksPolaroidGroup].map((group) =>
+            group ? (
+              <div
+                key={group.key}
+                className={`site-polaroid-group ${
+                  group === worksPolaroidExitGroup
+                    ? "site-polaroid-group-exit"
+                    : `site-polaroid-group-${group.mode}`
+                }`}
+              >
+                {group.pics.map((src, index) => {
+                  const offset = polaroidOffset(index, group.pics.length, group.spacing);
+                  const isMainGroup = group === worksPolaroidGroup;
+                  return (
+                    <div
+                      key={`${group.key}-${src}-${index}`}
+                      className="site-polaroid"
+                      ref={isMainGroup ? (node) => { workPolaroidCardRefs.current[index] = node; } : undefined}
+                      style={{
+                        "--polaroid-x": offset.x,
+                        "--polaroid-ty": offset.ty,
+                        "--polaroid-r": offset.r
+                      } as CSSProperties}
+                    >
+                      <img src={src} alt="" draggable={false} />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null
+          )}
+        </div>
+        <div
+          className="site-project-row-highlight cloneProjectHighlight"
+          style={{
+            top: `${worksHighlight.top}px`,
+            height: `${worksHighlight.height}px`,
+            opacity: worksHighlight.opacity
+          }}
+        />
+        {works.map(({ id, name, summary, image, polaroids }, index) => {
+          const cardImage = image ?? null;
+          return (
+            <Fragment key={id}>
+              <a
+                href={`/work/${id}`}
+                title={`${name} — ${summary}`}
+                className="site-project-row site-work-row"
+                ref={(node) => {
+                  workRowRefs.current[index] = node;
+                }}
+                onClick={(event) => {
+                  event.preventDefault();
+                  retractPolaroids("work");
+                  openProjectPage(id, "work");
+                }}
+                onMouseEnter={() => hoverProjectRow(index, "work")}
+                onFocus={() => hoverProjectRow(index, "work")}
+              >
+                <span className="site-work-row-image" aria-hidden="true">
+                  {cardImage ? (
+                    <img src={cardImage} alt={getImageCaption(cardImage) ?? `${name} thumbnail`} draggable={false} />
+                  ) : null}
+                </span>
+                <span className="site-work-row-copy">
+                  <span className="site-col-name">{name}</span>{" "}
+                  <span className="site-work-row-summary">{summary}</span>
+                </span>
+              </a>
+              {polaroids && polaroids.length > 0 ? (
+                <noscript>
+                  {polaroids.map((src) => (
+                    <img key={src} src={src} alt={getImageCaption(src) ?? `${name} photo`} />
+                  ))}
+                </noscript>
+              ) : null}
+            </Fragment>
+          );
+        })}
       </div>
     </section>
   );
@@ -1534,7 +1722,7 @@ export default function Home({
         />
 
         <div className={contentVisible ? shownStyle : hiddenStyle}>
-          {activeProjectId && projectsById[activeProjectId] ? (
+          {activeProjectId && (projectsById[activeProjectId] ?? workById[activeProjectId]) ? (
             <>
               <section className="project-page">
                 <button
@@ -1542,7 +1730,7 @@ export default function Home({
                   className="project-page-link project-page-link-button project-page-link-top"
                   onClick={closeProjectPage}
                 >
-                  Back home
+                  {"<"} Go back home
                 </button>
                 <div className="project-page-content">
                   <div
@@ -1550,7 +1738,7 @@ export default function Home({
                   />
                 </div>
               </section>
-              {renderProjectsSection()}
+              {activeEntryIsWork ? renderWorkSection() : renderProjectsSection()}
             </>
           ) : activeTopTab === "home" ? (
             <>
@@ -1559,7 +1747,7 @@ export default function Home({
                   <div className="site-hero-photo-wrap">
                     <img
                       className="site-hero-photo"
-                      src="/image.jpg"
+                      src="/daniel-negre-photo.jpg"
                       alt={displayName}
                       loading="eager"
                       draggable={false}
@@ -1621,11 +1809,11 @@ export default function Home({
                   </div>
                 </div>
                 <p className="site-hero-desc">
-                  Hey there! <img src="/wave.png" alt="👋" className="site-hero-wave" draggable={false} /> I'm <b className="font-bold text-[##99c7e8]">{displayName}</b>, a director, writer, developer... Overall, I make projects that are designed to improve people's lives. Right now I'm working on an open source app update server called <img src="/pawprint.png" alt="Pawprint logo" className="bio-inline-logo bio-inline-nix" draggable={false} /><b className="font-bold text-[##99c7e8]">Pawprint</b>.
+                  Hey there! <img src="/wave.png" alt="👋" className="site-hero-wave" draggable={false} /> I'm <b>{displayName}</b>, a director, writer, developer... Overall, I make projects that are designed to improve people's lives. Right now I'm working on an open source app update server called <img src="/pawprint.png" alt="Pawprint logo" className="bio-inline-logo bio-inline-nix" draggable={false} /><b>Pawprint</b>.
                 </p>
                 <p className="site-hero-bio-p">
                   In addition to this, I am the Founder and Chief Director of<br/>{" "}
-                  <img src="/nix.png" alt="Nix Entertainment logo" className="bio-inline-logo bio-inline-nix" draggable={false} />
+                  <img src="/nix.png" alt="" className="bio-inline-logo bio-inline-nix" draggable={false} />
                   <a
                     href="/project/nixentertainment"
                     title="Nix Entertainment | Daniel's media group"
@@ -1637,7 +1825,7 @@ export default function Home({
                     Nix Entertainment
                   </a>
                   . We're a media group working on projects like{" "}
-                  <a href="https://nixentertainment.com/shadowborne-chronicles" title="Shadowborne Chronicles | Animated Series by Nix Entertainment" target="_blank" rel="noopener noreferrer">
+                  <a href="https://nixentertainment.com/shadowborne-chronicles" title="Shadowborne Chronicles | Animated Series by Nix Entertainment" target="_blank">
                     <span className="shadowborne-wrap" style={{ pointerEvents: "none" }}>
                       <img src="/shadowborne.png" alt="Shadowborne Chronicles" className="bio-inline-logo bio-inline-logo-wide shadowborne-default" draggable={false} />
                       <img src="/shadowborne-white.png" alt="Shadowborne Chronicles" className="bio-inline-logo bio-inline-logo-wide shadowborne-white" draggable={false} aria-hidden="true" />
@@ -1715,8 +1903,10 @@ export default function Home({
                   </a>
                   .
                 </p>
+                <p>Stack-side, I've used many technologies over my 8+ years of daily coding.<br/>The one language that is stuck in my heart is JavaScript (and its extension, TypeScript), which is why I use <img src="/expo.svg" alt="Expo" className="bio-inline-logo bio-inline-nix" draggable={false} />for my (not yet released) mobile apps, <img src="/next.svg" alt="Next.JS" className="bio-inline-logo bio-inline-nix" draggable={false} />to power almost all the websites I make, and <img src="/nodejs.svg" alt="NodeJS" className="bio-inline-logo bio-inline-nix" draggable={false} />if possible when making backends/terminal based software.</p>
+                <p>When NodeJS is not suitable for a task, I also work with <img src="/python.svg" alt="Python" className="bio-inline-logo bio-inline-nix" draggable={false} />as a language, and also have experience with working with <img src="/docker.svg" alt="Docker" className="bio-inline-logo bio-inline-nix" draggable={false} />inside software like <img src="/coolify.svg" alt="Coolify" className="bio-inline-logo" draggable={false} />.</p>
                 <p>
-                  In order to be able to run all the software involved in my designs, I built a custom company-scale server called{" "}
+                  In order to be able to run all the software I make, I built a custom company-scale server called{" "}
                   <a
                     href="/project/le-node"
                     title="Le Node | Daniel's custom homelab server"
@@ -1754,12 +1944,37 @@ export default function Home({
                     onClick={() => setSayHiOpen(true)}
                   >
                     <span style={{ pointerEvents: "none" }}>
-                      Let's talk!
+                      Click here
                     </span>
+                  </button> or email me at{" "}
+                  <span className="inline-tooltip-wrapper">
+                  <button
+                    type="button"
+                    className="email-copy-button"
+                    onClick={handleCopyEmail}
+                    onMouseEnter={showEmailTooltip}
+                    onMouseLeave={hideEmailTooltip}
+                    onFocus={showEmailTooltip}
+                    onBlur={hideEmailTooltip}
+                  >
+                    <span style={{ pointerEvents: "none" }}>daniel@negrenavarro.me</span>
                   </button>
+                  <span
+                        className={`inline-copy-tooltip ${emailTooltipVisible ? "inline-copy-tooltip-visible" : ""}`}
+                        role="status"
+                        aria-live="polite"
+                      >
+                        {emailTooltipText}
+                      </span>
+                      </span>
+                  .
                 </div>
+                <section>
+                <div className="site-bio-line">I'm not an LLM enthusiast myself, but if you like using it to research, you can also click to ask <a href="https://chat.openai.com/?q=Please%20visit%20https%3A%2F%2Fnegrenavarro.me%20and%20its%20subfolders%20(check%20sitemap%20if%20you%20can%20for%20them)%2C%20https%3A%2F%2Fnixentertainment.com%2F%20and%20its%20subfolders%2C%20https%3A%2F%2Fgithub.com%2Fjustdanielndev%20and%20search%20on%20the%20web%20for%20all%20info%20available%20about%20Daniel%20and%20their%20projects.%20After%20gathering%20everything%2C%20produce%20a%20mid-sized%20structured%2C%20self-contained%20briefing%20with%20the%20most%20interesting%20details%20outlined%20and%20end%20by%20offering%20to%20go%20deeper%20on%20any%20specific%20project%2C%20technical%20aspect%2C%20or%20creative%20work." target="_blank" rel="noopener noreferrer">ChatGPT</a>, <a href="https://claude.ai/new?q=Please%20visit%20https%3A%2F%2Fnegrenavarro.me%20and%20its%20subfolders%20(check%20sitemap%20if%20you%20can%20for%20them)%2C%20https%3A%2F%2Fnixentertainment.com%2F%20and%20its%20subfolders%2C%20https%3A%2F%2Fgithub.com%2Fjustdanielndev%20and%20search%20on%20the%20web%20for%20all%20info%20available%20about%20Daniel%20and%20their%20projects.%20After%20gathering%20everything%2C%20produce%20a%20mid-sized%20structured%2C%20self-contained%20briefing%20with%20the%20most%20interesting%20details%20outlined%20and%20end%20by%20offering%20to%20go%20deeper%20on%20any%20specific%20project%2C%20technical%20aspect%2C%20or%20creative%20work." target="_blank" rel="noopener noreferrer">Claude</a>, <a href="https://www.perplexity.ai/search/new?q=Please%20visit%20https%3A%2F%2Fnegrenavarro.me%20and%20its%20subfolders%20(check%20sitemap%20if%20you%20can%20for%20them)%2C%20https%3A%2F%2Fnixentertainment.com%2F%20and%20its%20subfolders%2C%20https%3A%2F%2Fgithub.com%2Fjustdanielndev%20and%20search%20on%20the%20web%20for%20all%20info%20available%20about%20Daniel%20and%20their%20projects.%20After%20gathering%20everything%2C%20produce%20a%20mid-sized%20structured%2C%20self-contained%20briefing%20with%20the%20most%20interesting%20details%20outlined%20and%20end%20by%20offering%20to%20go%20deeper%20on%20any%20specific%20project%2C%20technical%20aspect%2C%20or%20creative%20work." target="_blank" rel="noopener noreferrer">Perplexity</a> or <a href="https://x.com/i/grok?text=Please%20visit%20https%3A%2F%2Fnegrenavarro.me%20and%20its%20subfolders%20(check%20sitemap%20if%20you%20can%20for%20them)%2C%20https%3A%2F%2Fnixentertainment.com%2F%20and%20its%20subfolders%2C%20https%3A%2F%2Fgithub.com%2Fjustdanielndev%20and%20search%20on%20the%20web%20for%20all%20info%20available%20about%20Daniel%20and%20their%20projects.%20After%20gathering%20everything%2C%20produce%20a%20mid-sized%20structured%2C%20self-contained%20briefing%20with%20the%20most%20interesting%20details%20outlined%20and%20end%20by%20offering%20to%20go%20deeper%20on%20any%20specific%20project%2C%20technical%20aspect%2C%20or%20creative%20work." target="_blank" rel="noopener noreferrer">Grok</a> to tell you more about what I do.</div>
+                </section>
               </section>
 
+              {renderWorkSection()}
               {renderProjectsSection()}
             </>
           ) : activeTopTab === "blog" ? (
@@ -1825,7 +2040,7 @@ export default function Home({
       >
         <div className="cloneLastfmCard cloneGithubCard">
           <div className="cloneGithubHeader">
-            <img className="cloneGithubAvatar" src={github?.avatarUrl ?? "/linkedin.jpg"} alt={github?.user ?? "GitHub avatar"} loading="lazy" />
+            <img className="cloneGithubAvatar" src={github?.avatarUrl ?? "/daniel-negre.png"} alt={github?.user ? `${github.user} on GitHub` : "Daniel Negre, founder of Nix Entertainment."} loading="lazy" />
             <div className="previewInfo">
               <p className="previewTitle">GitHub</p>
               <p className="previewMeta">@{github?.user ?? GITHUB_USER}</p>
@@ -1841,7 +2056,7 @@ export default function Home({
         style={{ top: `${linkedinPos.top}px`, left: `${linkedinPos.left}px` }}
       >
         <div className="cloneLastfmCard cloneLinkedinCard">
-          <img className="cloneLinkedinAvatar" src="/linkedin.jpg" alt="Daniel Negre" loading="lazy" />
+          <img className="cloneLinkedinAvatar" src="/daniel-negre.png" alt="Daniel Negre, founder of Nix Entertainment." loading="lazy" />
           <div className="previewInfo">
             <p className="previewTitle">LinkedIn</p>
             <p className="previewMeta">Founder @ Nix Entertainment | Media Production</p>
@@ -1857,7 +2072,7 @@ export default function Home({
               {chatMessages.some(m => m.from === "user") && chatStep !== "done" && chatRetryEmail === null && (
                 <button type="button" className="say-hi-undo-btn" onClick={handleUndo} aria-label="Undo">Undo</button>
               )}
-              <img src="/linkedin.jpg" alt="Daniel Negre" className="say-hi-chat-avatar" loading="eager" />
+              <img src="/daniel-negre.png" alt="Daniel Negre, founder of Nix Entertainment." className="say-hi-chat-avatar" loading="eager" />
               <span className="say-hi-chat-name">Daniel</span>
               <button type="button" className="say-hi-close" onClick={() => setSayHiOpen(false)} aria-label="Close">✕</button>
             </div>

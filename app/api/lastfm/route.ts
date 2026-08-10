@@ -118,21 +118,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing Last.fm user" }, { status: 400 });
   }
 
+  const fallbackHeaders = {
+    "Cache-Control": "public, s-maxage=45, stale-while-revalidate=120",
+    "Content-Type": "application/json"
+  };
+
   try {
     const apiKey = process.env.LASTFM_API_KEY;
     const live = apiKey ? await fromApi(user, apiKey) : null;
     const data = live ?? (await fromHtml(user));
 
     if (!data) {
-      return NextResponse.json({ error: "Could not load Last.fm data" }, { status: 502 });
+      return new NextResponse(JSON.stringify(null), { status: 200, headers: fallbackHeaders });
     }
 
-    return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "public, s-maxage=45, stale-while-revalidate=120"
-      }
-    });
-  } catch {
-    return NextResponse.json({ error: "Last.fm fetch failed" }, { status: 502 });
+    return new NextResponse(JSON.stringify(data), { status: 200, headers: fallbackHeaders });
+  } catch (error) {
+    console.error("Last.fm request failed", error);
+    return new NextResponse(JSON.stringify(null), { status: 200, headers: fallbackHeaders });
   }
 }

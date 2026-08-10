@@ -8,7 +8,8 @@ import TableOfContents from "../_components/table-of-contents";
 import BlogPostAnalytics from "../_components/blog-post-analytics";
 import styles from "../blog.module.css";
 import { getBlogPostBySlug, getBlogPostSlugs } from "@/lib/blog";
-import { toCanonicalUrl } from "@/lib/seo";
+import { toCanonicalUrl, CANONICAL_ORIGIN } from "@/lib/seo";
+import { DEFAULT_NAME } from "@/lib/name-resolution";
 
 type Params = {
   slug: string;
@@ -82,7 +83,8 @@ export default async function BlogPostPage({
 
   let paragraphIndex = 0;
   const canonicalUrl = toCanonicalUrl(`/blog/${post.slug}`);
-  const structuredData = {
+  const isDefaultAuthor = post.frontmatter.author === DEFAULT_NAME;
+  const blogPostingData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "@id": `${canonicalUrl}#blogpost`,
@@ -92,11 +94,23 @@ export default async function BlogPostPage({
     dateModified: post.frontmatter.updatedAt,
     author: {
       "@type": "Person",
-      name: post.frontmatter.author
+      name: post.frontmatter.author,
+      ...(isDefaultAuthor ? { url: CANONICAL_ORIGIN } : {}),
+      ...(post.frontmatter.authorImage ? { image: toCanonicalUrl(post.frontmatter.authorImage) } : {})
     },
     mainEntityOfPage: canonicalUrl,
     url: canonicalUrl
   };
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: DEFAULT_NAME, item: CANONICAL_ORIGIN },
+      { "@type": "ListItem", position: 2, name: `${DEFAULT_NAME} Blog`, item: toCanonicalUrl("/blog") },
+      { "@type": "ListItem", position: 3, name: post.frontmatter.title }
+    ]
+  };
+  const structuredData = [blogPostingData, breadcrumbData];
 
   return (
     <div className={styles.container} data-align="right">
@@ -164,7 +178,7 @@ export default async function BlogPostPage({
       <hr className={styles.containerRule} />
 
       <footer className={styles.footer}>
-        <p className={styles.footerCopy}>Written with love and effort :D © {new Date().getFullYear()} Daniel Negre on most content. Each brand is the property of its respective owner.</p>
+        <p className={styles.footerCopy}>© {new Date().getFullYear()} Daniel Negre | Written with love and effort :D</p>
       </footer>
     </div>
   );

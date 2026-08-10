@@ -49,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning className={inter.variable}>
       <head>
-        <link rel="preload" as="image" href="/image.jpg" />
+        <link rel="preload" as="image" href="/daniel-negre-photo.jpg" />
         <link rel="preload" as="image" href="/envelope.png" />
         <link rel="preload" as="image" href="/nix.png" />
         <link rel="preload" as="image" href="/wave.png" />

@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
 import Home from "@/app/page";
 import { notFound } from "next/navigation";
-import { projects, projectsById } from "@/lib/projects";
+import { works, workById } from "@/lib/work";
 import { toCanonicalUrl } from "@/lib/seo";
 import { getPrimaryImage } from "@/lib/entry-images";
 
-type ProjectPageProps = {
+type WorkPageProps = {
   params: Promise<{ projectid: string }>;
 };
 
 export async function generateStaticParams() {
-  return projects.map((project) => ({
+  return works.map((project) => ({
     projectid: project.id
   }));
 }
 
 export async function generateMetadata({
   params
-}: ProjectPageProps): Promise<Metadata> {
+}: WorkPageProps): Promise<Metadata> {
   const { projectid } = await params;
-  const project = projectsById[projectid];
+  const project = workById[projectid];
 
   if (!project) {
     return {};
@@ -32,12 +32,12 @@ export async function generateMetadata({
     title: `${project.name} | Daniel Negre Navarro`,
     description: project.summary,
     alternates: {
-      canonical: `/project/${project.id}`
+      canonical: `/work/${project.id}`
     },
     openGraph: {
       title: project.name,
       description: project.summary,
-      url: toCanonicalUrl(`/project/${project.id}`),
+      url: toCanonicalUrl(`/work/${project.id}`),
       type: "article",
       ...(primaryImageUrl ? { images: [{ url: primaryImageUrl, alt: project.name }] } : {})
     },
@@ -50,9 +50,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
+export default async function WorkPage({ params }: WorkPageProps) {
   const { projectid } = await params;
-  const project = projectsById[projectid];
+  const project = workById[projectid];
 
   if (!project) {
     notFound();

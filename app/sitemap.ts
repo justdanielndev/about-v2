@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 import { getBlogPostSlugs } from "@/lib/blog";
 import { projects } from "@/lib/projects";
+import { works } from "@/lib/work";
 import { toCanonicalUrl } from "@/lib/seo";
+import { extractEntryImages } from "@/lib/entry-images";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -12,19 +14,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: toCanonicalUrl("/"),
       lastModified: now,
       changeFrequency: "weekly",
-      priority: 1
+      priority: 1,
+      images: [toCanonicalUrl("/daniel-negre.png")]
     },
     {
       url: toCanonicalUrl("/blog"),
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8
-    },
-    {
-      url: toCanonicalUrl("/void"),
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.1
     }
   ];
 
@@ -32,15 +29,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: toCanonicalUrl(`/blog/${slug}`),
     lastModified: now,
     changeFrequency: "monthly",
-    priority: 0.7
+    priority: 0.5
   }));
 
   const projectRoutes: MetadataRoute.Sitemap = projects.map((project) => ({
     url: toCanonicalUrl(`/project/${project.id}`),
     lastModified: now,
     changeFrequency: "monthly",
-    priority: 0.5
+    priority: 0.7,
+    images: extractEntryImages(project)
   }));
 
-  return [...staticRoutes, ...blogRoutes, ...projectRoutes];
+  const workRoutes: MetadataRoute.Sitemap = works.map((work) => ({
+    url: toCanonicalUrl(`/work/${work.id}`),
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.7,
+    images: extractEntryImages(work)
+  }));
+
+  return [...staticRoutes, ...blogRoutes, ...projectRoutes, ...workRoutes];
 }

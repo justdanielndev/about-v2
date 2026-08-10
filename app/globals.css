@@ -817,6 +817,64 @@ html {
   font-size: 1.05rem !important;
 }
 
+.site-projects-work {
+  padding-bottom: calc(var(--space-7) + 0.25rem);
+}
+
+.site-work-row {
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: 0.6rem;
+}
+
+.site-work-row-image {
+  width: auto;
+  max-width: 6rem;
+  height: auto;
+  max-height: 3.6rem;
+  flex-shrink: 0;
+  border-radius: 0.35rem;
+  overflow: hidden;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.site-work-row-image img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 3.6rem;
+  object-fit: contain;
+  display: block;
+}
+
+.site-work-row-copy {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.site-work-row-summary {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  transition: transform 320ms var(--ease-smooth), color 260ms var(--ease-smooth);
+}
+
+.site-work-row-copy {
+  transition: transform 320ms var(--ease-smooth);
+}
+
+@media (max-width: 640px) {
+  .site-work-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .site-project-row-header {
   cursor: default;
 }
@@ -859,7 +917,9 @@ html {
     color: var(--fg-accent);
   }
 
-  .site-project-row:not(.site-project-row-header):hover .site-col-name {
+  .site-project-row:not(.site-project-row-header):hover .site-col-name,
+  .site-project-row:not(.site-project-row-header):hover .site-work-row-summary,
+  .site-project-row:not(.site-project-row-header):hover .site-work-row-copy {
     transform: translateX(4px);
   }
 }
@@ -921,6 +981,22 @@ html {
   display: block;
   border-radius: var(--radius-card);
   margin-bottom: var(--space-5);
+}
+
+.project-page-content img.bio-inline-logo,
+.project-page-content img.bio-inline-logo-wide {
+  display: inline-block;
+  width: auto;
+  max-width: none;
+  height: 1.1em;
+  margin: 0 0.2em 0 0;
+  vertical-align: -0.18em;
+  border-radius: 0;
+}
+
+.project-page-content img.bio-inline-logo-wide {
+  height: 1.65em;
+  vertical-align: -0.45em;
 }
 
 .project-page-content .project-banner {

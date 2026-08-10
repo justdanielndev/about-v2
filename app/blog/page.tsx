@@ -5,11 +5,27 @@ import { getAllBlogPosts } from "@/lib/blog";
 import { getDefaultName } from "@/lib/name-resolution";
 import { toCanonicalUrl } from "@/lib/seo";
 
+const BLOG_DESCRIPTION =
+  "A collection of articles and notes on various topics, written by Daniel Negre. These are well-researched and impartial, and they sometimes cite other sources and studies as well.";
+
 export const metadata: Metadata = {
   title: `${getDefaultName()} (Blog)`,
-  description: "A collection of articles and notes on various topics, written by Daniel Negre. These are well-researched and impartial, and they sometimes cite other sources and studies as well.",
+  description: BLOG_DESCRIPTION,
   alternates: {
     canonical: "/blog"
+  },
+  openGraph: {
+    title: `${getDefaultName()} Blog`,
+    description: BLOG_DESCRIPTION,
+    url: toCanonicalUrl("/blog"),
+    type: "website",
+    images: [{ url: toCanonicalUrl("/link.png"), alt: `${getDefaultName()} Blog` }]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${getDefaultName()} Blog`,
+    description: BLOG_DESCRIPTION,
+    images: [toCanonicalUrl("/link.png")]
   }
 };
 
