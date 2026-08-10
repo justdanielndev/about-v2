@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: toCanonicalUrl("/blog"),
       lastModified: now,
       changeFrequency: "weekly",
-      priority: 0.8
+      priority: 0.5
     }
   ];
 
@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: toCanonicalUrl(`/blog/${slug}`),
     lastModified: now,
     changeFrequency: "monthly",
-    priority: 0.5
+    priority: 0.6
   }));
 
   const projectRoutes: MetadataRoute.Sitemap = projects.map((project) => ({
