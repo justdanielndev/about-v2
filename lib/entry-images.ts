@@ -27,10 +27,10 @@ const IMAGE_SEO_ALLOWLIST = new Set<string>([
   "/gocalp-project-graph-present.jpg",
   "/gocalp-first-prize.jpg",
   "/gocalp-project-main-presentation.jpg",
-  "/shadowborne-aria-concept.png",
-  "/shadowborne-aria-haircolor.png",
-  "/shadowborne-umbriel-evolution.png",
-  "/shadowborne-zarka-evolution.png"
+  "/shadowborne-aria-concept.webp",
+  "/shadowborne-aria-haircolor.webp",
+  "/shadowborne-umbriel-evolution.webp",
+  "/shadowborne-zarka-evolution.webp"
 ]);
 
 const IMAGE_CAPTIONS: Record<string, string> = {
@@ -59,10 +59,10 @@ const IMAGE_CAPTIONS: Record<string, string> = {
   "/gocalp-first-prize.jpg": "Daniel Negre receives the goCalp first-prize award from Global Omnium in Calpe.",
   "/gocalp-project-main-presentation.jpg": "Daniel Negre presents his goCalp garden-corridor proposal at the Global Omnium podium.",
 
-  "/shadowborne-aria-concept.png": "Aria's concept art for Nix Entertainment's Shadowborne Chronicles.",
-  "/shadowborne-aria-haircolor.png": "Aria's dyed hair gradually fades to natural dark brown across the series.",
-  "/shadowborne-umbriel-evolution.png": "Left-to-right concept art traces Umbriel's evolution through the design process.",
-  "/shadowborne-zarka-evolution.png": "Left-to-right concept art traces Zarka's design evolution through the series' creation."
+  "/shadowborne-aria-concept.webp": "Aria's concept art for Nix Entertainment's Shadowborne Chronicles.",
+  "/shadowborne-aria-haircolor.webp": "Aria's dyed hair gradually fades to natural dark brown across the series.",
+  "/shadowborne-umbriel-evolution.webp": "Left-to-right concept art traces Umbriel's evolution through the design process.",
+  "/shadowborne-zarka-evolution.webp": "Left-to-right concept art traces Zarka's design evolution through the series' creation."
 };
 
 function collectAllowlistedSrcs(entry: ImageBearingEntry): string[] {
