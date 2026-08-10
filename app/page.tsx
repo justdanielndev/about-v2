@@ -1650,7 +1650,7 @@ export default function Home({
             <Fragment key={id}>
               <a
                 href={`/work/${id}`}
-                title={`${name} — ${summary}`}
+                title={`${name} | ${summary}`}
                 className="site-project-row site-work-row"
                 ref={(node) => {
                   workRowRefs.current[index] = node;
