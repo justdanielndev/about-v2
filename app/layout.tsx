@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import BuildMetaFooter from "@/components/build-meta-footer";
+import CustomCursor from "@/components/custom-cursor";
 import GlobalStructuredData from "@/components/global-structured-data";
 import PostHogClientProvider from "@/components/posthog-provider";
 import { buildSiteTitle, getDefaultName } from "@/lib/name-resolution";
@@ -56,6 +57,7 @@ export default function RootLayout({
       </head>
       <body>
         <GlobalStructuredData />
+        <CustomCursor />
         <PostHogClientProvider apiKey={posthogKey} apiHost={posthogHost}>
           <div className="site-root">
             <div className="site-root-content">{children}</div>

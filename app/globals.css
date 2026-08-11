@@ -7,6 +7,7 @@
   --link-muted: #575757;
   --border: #11111114;
   --othercolor: #99c7e8;
+  --mousecolor: #1f1f1f;
   --link-underline: rgba(70, 130, 180, 0.55);
   --accent: #1111110d;
   --bg: #fafafa;
@@ -73,6 +74,24 @@ body {
 
 html {
   scrollbar-gutter: stable;
+}
+
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: opacity 150ms var(--ease-smooth);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.custom-cursor-active,
+  html.custom-cursor-active * {
+    cursor: none !important;
+  }
 }
 
 .site-loader {
@@ -963,7 +982,6 @@ html {
 .project-page-content {
   margin-top: var(--space-5);
   color: var(--fg-accent);
-  max-width: 38rem;
 }
 
 .project-page-content p {
