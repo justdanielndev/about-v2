@@ -238,6 +238,9 @@ export default function Home({
   const [githubOpen, setGithubOpen] = useState(false);
   const [githubPos, setGithubPos] = useState({ top: 0, left: 0 });
   const [github, setGithub] = useState<GithubData | null>(null);
+  const [hasOpenedLastfm, setHasOpenedLastfm] = useState(false);
+  const [hasOpenedLinkedin, setHasOpenedLinkedin] = useState(false);
+  const [hasOpenedGithub, setHasOpenedGithub] = useState(false);
 
   const projectsRowContainerRef = useRef<HTMLDivElement | null>(null);
   const worksRowContainerRef = useRef<HTMLDivElement | null>(null);
@@ -784,6 +787,7 @@ export default function Home({
     }
 
     setLastfmOpen(true);
+    setHasOpenedLastfm(true);
   };
 
   const closeLastfm = () => {
@@ -809,6 +813,7 @@ export default function Home({
     }
 
     setLinkedinOpen(true);
+    setHasOpenedLinkedin(true);
   };
 
   const closeLinkedin = () => {
@@ -834,6 +839,7 @@ export default function Home({
     }
 
     setGithubOpen(true);
+    setHasOpenedGithub(true);
   };
 
   const closeGithub = () => {
@@ -1485,7 +1491,7 @@ export default function Home({
     setTabPull(pull);
   };
 
-  const renderProjectsSection = () => (
+  const renderProjectsSection = (includePolaroidFallback: boolean = true) => (
     <section className="site-projects">
       <h2 className="site-projects-title">Featured Projects</h2>
       <div
@@ -1572,7 +1578,7 @@ export default function Home({
               <span className="site-col-name">{name}</span>
               <span className="site-col-type">{type}</span>
             </a>
-            {polaroids && polaroids.length > 0 ? (
+            {includePolaroidFallback && polaroids && polaroids.length > 0 ? (
               <noscript>
                 {polaroids.map((src) => (
                   <img key={src} src={src} alt={getImageCaption(src) ?? `${name} photo`} />
@@ -1585,7 +1591,7 @@ export default function Home({
     </section>
   );
 
-  const renderWorkSection = () => (
+  const renderWorkSection = (includePolaroidFallback: boolean = true) => (
     <section className="site-projects site-projects-work">
       <h2 className="site-projects-title">Individual Creations</h2>
       <div
@@ -1673,7 +1679,7 @@ export default function Home({
                   <span className="site-work-row-summary">{summary}</span>
                 </span>
               </a>
-              {polaroids && polaroids.length > 0 ? (
+              {includePolaroidFallback && polaroids && polaroids.length > 0 ? (
                 <noscript>
                   {polaroids.map((src) => (
                     <img key={src} src={src} alt={getImageCaption(src) ?? `${name} photo`} />
@@ -1736,9 +1742,18 @@ export default function Home({
                   <div
                     dangerouslySetInnerHTML={{ __html: sanitizedProjectContent }}
                   />
+                  {currentProject?.polaroids && currentProject.polaroids.length > 0 ? (
+                    <noscript>
+                      {currentProject.polaroids.map((src) => (
+                        <img key={src} src={src} alt={getImageCaption(src) ?? `${currentProject.name} photo`} />
+                      ))}
+                    </noscript>
+                  ) : null}
                 </div>
               </section>
-              {activeEntryIsWork ? renderWorkSection() : renderProjectsSection()}
+              <nav aria-label={activeEntryIsWork ? "More creations to explore" : "More projects to explore"}>
+                {activeEntryIsWork ? renderWorkSection(false) : renderProjectsSection(false)}
+              </nav>
             </>
           ) : activeTopTab === "home" ? (
             <>
@@ -1996,6 +2011,7 @@ export default function Home({
 
       </main>
 
+      {hasOpenedLastfm && (
       <div
         role="dialog"
         aria-label="Last.fm preview"
@@ -2032,7 +2048,9 @@ export default function Home({
             : <div className="cloneLastfmCard">{inner}</div>;
         })()}
       </div>
+      )}
 
+      {hasOpenedGithub && (
       <div
         aria-label="GitHub preview"
         className={`github-preview-card-float ${githubOpen ? "github-preview-card-float-open" : ""}`}
@@ -2049,7 +2067,9 @@ export default function Home({
           <img className="cloneGithubChart" src={github?.contributionsUrl ?? `https://ghchart.rshah.org/409ba5/${encodeURIComponent(GITHUB_USER)}`} alt="GitHub contribution graph" loading="lazy" />
         </div>
       </div>
+      )}
 
+      {hasOpenedLinkedin && (
       <div
         aria-label="LinkedIn preview"
         className={`linkedin-preview-card-float ${linkedinOpen ? "linkedin-preview-card-float-open" : ""}`}
@@ -2064,6 +2084,7 @@ export default function Home({
           </div>
         </div>
       </div>
+      )}
 
       {sayHiOpen && (
         <div className="say-hi-overlay" onClick={() => setSayHiOpen(false)}>

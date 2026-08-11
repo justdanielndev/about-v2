@@ -28,15 +28,29 @@ function getPageName(pathname: string): string {
     return `${DEFAULT_NAME} Blog Post`;
   }
   if (pathname.startsWith("/work/")) {
-    return `${DEFAULT_NAME} Work`;
+    const work = workById[pathname.slice("/work/".length)];
+    return work ? `${work.name} | ${DEFAULT_NAME}` : `${DEFAULT_NAME} Work`;
   }
   if (pathname.startsWith("/project/")) {
-    return `${DEFAULT_NAME} Project`;
+    const project = projectsById[pathname.slice("/project/".length)];
+    return project ? `${project.name} | ${DEFAULT_NAME}` : `${DEFAULT_NAME} Project`;
   }
   if (pathname === "/void") {
     return `${DEFAULT_NAME} (???)`;
   }
   return `${DEFAULT_NAME} (Portfolio)`;
+}
+
+function getMainEntityId(pathname: string): string | undefined {
+  if (pathname.startsWith("/project/")) {
+    const project = projectsById[pathname.slice("/project/".length)];
+    return project ? `${toCanonicalUrl(`/project/${project.id}`)}#creativework` : undefined;
+  }
+  if (pathname.startsWith("/work/")) {
+    const work = workById[pathname.slice("/work/".length)];
+    return work ? `${toCanonicalUrl(`/work/${work.id}`)}#creativework` : undefined;
+  }
+  return undefined;
 }
 
 const DANIEL_AVATAR_URL = toCanonicalUrl("/daniel-negre.png");
@@ -111,6 +125,7 @@ export default function GlobalStructuredData() {
   const canonicalUrl = toCanonicalUrl(pathname);
   const primaryImageOfPage = getPrimaryImageObject(pathname);
   const breadcrumbList = getBreadcrumbList(pathname);
+  const mainEntityId = getMainEntityId(pathname);
 
   const projectNodes = projects.map((project) => ({
     "@type": "CreativeWork",
@@ -171,6 +186,7 @@ export default function GlobalStructuredData() {
         about: {
           "@id": `${CANONICAL_ORIGIN}/#person`
         },
+        ...(mainEntityId ? { mainEntity: { "@id": mainEntityId } } : {}),
         ...(primaryImageOfPage ? { primaryImageOfPage } : {})
       },
       ...(breadcrumbList ? [breadcrumbList] : []),

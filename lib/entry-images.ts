@@ -3,10 +3,11 @@ import { toCanonicalUrl } from "@/lib/seo";
 type ImageBearingEntry = {
   content: string;
   image?: string;
+  ogImage?: string;
   polaroids?: string[];
 };
 
-const IMAGE_SEO_ALLOWLIST = new Set<string>([
+export const IMAGE_SEO_ALLOWLIST = new Set<string>([
   "/daniel-negre.png",
   "/nix-entertainment-banner.jpg",
   "/nix-umbriel-reveal.jpg",
@@ -27,6 +28,7 @@ const IMAGE_SEO_ALLOWLIST = new Set<string>([
   "/gocalp-project-graph-present.jpg",
   "/gocalp-first-prize.jpg",
   "/gocalp-project-main-presentation.jpg",
+  "/shadowborne-chronicles-character-sheets.webp",
   "/shadowborne-aria-concept.webp",
   "/shadowborne-aria-haircolor.webp",
   "/shadowborne-umbriel-evolution.webp",
@@ -59,6 +61,7 @@ const IMAGE_CAPTIONS: Record<string, string> = {
   "/gocalp-first-prize.jpg": "Daniel Negre receives the goCalp first-prize award from Global Omnium in Calpe.",
   "/gocalp-project-main-presentation.jpg": "Daniel Negre presents his goCalp garden-corridor proposal at the Global Omnium podium.",
 
+  "/shadowborne-chronicles-character-sheets.webp": "Banner showing Aria and Umbriel for Shadowborne Chronicles design info page",
   "/shadowborne-aria-concept.webp": "Aria's concept art for Nix Entertainment's Shadowborne Chronicles.",
   "/shadowborne-aria-haircolor.webp": "Aria's dyed hair gradually fades to natural dark brown across the series.",
   "/shadowborne-umbriel-evolution.webp": "Left-to-right concept art traces Umbriel's evolution through the design process.",
@@ -98,6 +101,10 @@ export function getEntryImagesWithCaptions(
 }
 
 export function getPrimaryImage(entry: ImageBearingEntry): string | undefined {
+  if (entry.ogImage) {
+    return entry.ogImage;
+  }
+
   if (entry.image) {
     return entry.image;
   }

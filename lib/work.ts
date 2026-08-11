@@ -8,6 +8,7 @@ export type ProjectEntry = {
   summary: string;
   content: string;
   image?: string;
+  ogImage?: string;
   polaroids?: string[];
 };
 
@@ -19,6 +20,7 @@ export const works: ProjectEntry[] = [
     type: "Design & Writing",
     summary: "Making characters for the Shadowborne Chronicles animated series.",
     image: "/shadowborne-chronicles-characters-thumbnail.webp",
+    ogImage: "/shadowborne-chronicles-character-sheets.webp",
     content: `
 <img src="/shadowborne-chronicles-character-sheets.webp" alt="Shadowborne Chronicles character sheets" class="project-banner" />
 <p>In 2025, my team and I started working on the Shadowborne Chronicles animated series. As the director of the series, I was in charge of creating the characters.</p>
