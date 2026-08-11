@@ -127,29 +127,36 @@ export default function GlobalStructuredData() {
   const breadcrumbList = getBreadcrumbList(pathname);
   const mainEntityId = getMainEntityId(pathname);
 
-  const projectNodes = projects.map((project) => ({
-    "@type": "CreativeWork",
-    "@id": `${toCanonicalUrl(`/project/${project.id}`)}#creativework`,
-    name: project.name,
-    description: project.summary,
-    genre: project.type,
-    dateCreated: resolveYear(project.year),
-    url: toCanonicalUrl(`/project/${project.id}`),
-    creator: { "@id": `${CANONICAL_ORIGIN}/#person` },
-    image: toImageObjects(getEntryImagesWithCaptions(project))
-  }));
+  const currentProjectId = pathname.startsWith("/project/") ? pathname.slice("/project/".length) : null;
+  const currentWorkId = pathname.startsWith("/work/") ? pathname.slice("/work/".length) : null;
 
-  const workNodes = works.map((work) => ({
-    "@type": "CreativeWork",
-    "@id": `${toCanonicalUrl(`/work/${work.id}`)}#creativework`,
-    name: work.name,
-    description: work.summary,
-    genre: work.type,
-    dateCreated: resolveYear(work.year),
-    url: toCanonicalUrl(`/work/${work.id}`),
-    creator: { "@id": `${CANONICAL_ORIGIN}/#person` },
-    image: toImageObjects(getEntryImagesWithCaptions(work))
-  }));
+  const projectNodes = projects
+    .filter((project) => project.id === currentProjectId)
+    .map((project) => ({
+      "@type": "CreativeWork",
+      "@id": `${toCanonicalUrl(`/project/${project.id}`)}#creativework`,
+      name: project.name,
+      description: project.summary,
+      genre: project.type,
+      dateCreated: resolveYear(project.year),
+      url: toCanonicalUrl(`/project/${project.id}`),
+      creator: { "@id": `${CANONICAL_ORIGIN}/#person` },
+      image: toImageObjects(getEntryImagesWithCaptions(project))
+    }));
+
+  const workNodes = works
+    .filter((work) => work.id === currentWorkId)
+    .map((work) => ({
+      "@type": "CreativeWork",
+      "@id": `${toCanonicalUrl(`/work/${work.id}`)}#creativework`,
+      name: work.name,
+      description: work.summary,
+      genre: work.type,
+      dateCreated: resolveYear(work.year),
+      url: toCanonicalUrl(`/work/${work.id}`),
+      creator: { "@id": `${CANONICAL_ORIGIN}/#person` },
+      image: toImageObjects(getEntryImagesWithCaptions(work))
+    }));
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -159,6 +166,11 @@ export default function GlobalStructuredData() {
         "@id": `${CANONICAL_ORIGIN}/#person`,
         name: DEFAULT_NAME,
         url: CANONICAL_ORIGIN,
+        sameAs: [
+          "https://www.linkedin.com/in/daniel-negre/",
+          "https://github.com/justdanielndev",
+          "https://orcid.org/0009-0008-2507-2584"
+        ],
         image: {
           "@type": "ImageObject",
           url: DANIEL_AVATAR_URL,

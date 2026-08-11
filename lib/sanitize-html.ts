@@ -92,6 +92,12 @@ export function sanitizeProjectHtml(input: string): string {
       el.setAttribute("alt", alt);
       if (cls) el.setAttribute("class", cls);
       el.setAttribute("loading", "lazy");
+    } else if (tag === "h2" || tag === "h3" || tag === "h4") {
+      const id = el.getAttribute("id");
+      for (const attr of Array.from(el.attributes)) {
+        el.removeAttribute(attr.name);
+      }
+      if (id) el.setAttribute("id", id);
     } else {
       for (const attr of Array.from(el.attributes)) {
         el.removeAttribute(attr.name);

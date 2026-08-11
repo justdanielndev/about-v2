@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Home from "@/components/home";
 import { notFound } from "next/navigation";
-import { MDXRemote } from "next-mdx-remote/rsc";
-import rehypeSlug from "rehype-slug";
-import remarkGfm from "remark-gfm";
-import TableOfContents from "../_components/table-of-contents";
-import BlogPostAnalytics from "../_components/blog-post-analytics";
-import styles from "../blog.module.css";
-import { getBlogPostBySlug, getBlogPostSlugs } from "@/lib/blog";
+import { getBlogEntries, getBlogPostBySlug, getBlogPostSlugs } from "@/lib/blog";
 import { toCanonicalUrl, CANONICAL_ORIGIN } from "@/lib/seo";
 import { DEFAULT_NAME } from "@/lib/name-resolution";
 
@@ -16,20 +10,6 @@ type Params = {
 };
 
 export const dynamicParams = false;
-
-function formatDate(iso: string): string {
-  const date = new Date(`${iso}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) {
-    return iso;
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC"
-  }).format(date);
-}
 
 export async function generateStaticParams() {
   const slugs = await getBlogPostSlugs();
@@ -75,13 +55,15 @@ export default async function BlogPostPage({
   params: Promise<Params>;
 }) {
   const resolvedParams = await params;
-  const post = await getBlogPostBySlug(resolvedParams.slug);
+  const [post, blogEntries] = await Promise.all([
+    getBlogPostBySlug(resolvedParams.slug),
+    getBlogEntries()
+  ]);
 
   if (!post) {
     notFound();
   }
 
-  let paragraphIndex = 0;
   const canonicalUrl = toCanonicalUrl(`/blog/${post.slug}`);
   const isDefaultAuthor = post.frontmatter.author === DEFAULT_NAME;
   const blogPostingData = {
@@ -113,73 +95,11 @@ export default async function BlogPostPage({
   const structuredData = [blogPostingData, breadcrumbData];
 
   return (
-    <div className={styles.container} data-align="right">
+    <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <BlogPostAnalytics
-        slug={post.slug}
-        title={post.frontmatter.title}
-        estimatedReadingMinutes={post.readingMinutes}
-        publishedAt={post.frontmatter.publishedAt}
-        updatedAt={post.frontmatter.updatedAt}
-      />
-
-      <TableOfContents headings={post.headings} />
-
-      <header id="pre" className={`${styles.articleHeader} ${styles.blogTextRise}`}>
-        <h1 className={`${styles.fluid} ${styles.articleTitle}`}>{post.frontmatter.title}</h1>
-        <div className={styles.articleAuthor}>
-          <div className={styles.articleAuthorInfo}>
-            <span>
-              Originally written on {formatDate(post.frontmatter.publishedAt)}, last updated on {formatDate(post.frontmatter.updatedAt)}.
-            </span>
-          </div>
-        </div>
-      </header>
-
-      <main className={`${styles.articleMain} ${styles.blogTextRise} ${styles.blogTextRiseDelay1}`}>
-        <article className={styles.prose}>
-          <MDXRemote
-            source={post.content}
-            options={{
-              mdxOptions: {
-                remarkPlugins: [remarkGfm],
-                rehypePlugins: [rehypeSlug]
-              }
-            }}
-            components={{
-              p: ({ children, ...props }) => {
-                paragraphIndex += 1;
-                const className = paragraphIndex === 1 ? styles.intro : undefined;
-                return (
-                  <p {...props} className={className}>
-                    {children}
-                  </p>
-                );
-              },
-              a: ({ href, children, ...props }) => {
-                const external = typeof href === "string" && /^https?:\/\//.test(href);
-                return (
-                  <a
-                    href={href}
-                    {...props}
-                    target={external ? "_blank" : undefined}
-                    rel={external ? "noopener noreferrer" : undefined}
-                  >
-                    {children}
-                  </a>
-                );
-              },
-              hr: (props) => <hr {...props} className={styles.rule} />
-            }}
-          />
-        </article>
-      </main>
-
-      <hr className={styles.containerRule} />
-
-      <footer className={styles.footer}>
-        <p className={styles.footerCopy}>© {new Date().getFullYear()} Daniel Negre | Written with love and effort :D</p>
-      </footer>
-    </div>
+      <div data-vaul-drawer-wrapper>
+        <Home initialProjectId={post.slug} standaloneProjectRoute blogEntries={blogEntries} />
+      </div>
+    </>
   );
 }

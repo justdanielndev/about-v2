@@ -3,6 +3,10 @@ import path from "node:path";
 import matter from "gray-matter";
 import GithubSlugger from "github-slugger";
 import { cache } from "react";
+import type { ReactNode } from "react";
+import { compileMDX } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
 
 const BLOG_DIRECTORY = path.join(process.cwd(), "content", "blog");
 
@@ -29,6 +33,23 @@ export type BlogPost = {
   headings: BlogHeading[];
   excerpt: string;
   readingMinutes: number;
+};
+
+export type BlogEntry = {
+  id: string;
+  name: string;
+  summary: string;
+  body: ReactNode;
+  image?: string;
+  ogImage?: string;
+  polaroids?: string[];
+  publishedAt: string;
+  updatedAt: string;
+  author: string;
+  authorRole?: string;
+  authorImage?: string;
+  readingMinutes: number;
+  headings: BlogHeading[];
 };
 
 function parseFrontmatterDate(value: unknown): string {
@@ -203,4 +224,53 @@ export const getAllBlogPosts = cache(async (): Promise<BlogPost[]> => {
   return posts
     .filter((post): post is BlogPost => post !== null)
     .sort((a, b) => b.frontmatter.publishedAt.localeCompare(a.frontmatter.publishedAt));
+});
+
+async function renderPostBody(post: BlogPost): Promise<ReactNode> {
+  const { content } = await compileMDX({
+    source: post.content,
+    options: {
+      mdxOptions: {
+        remarkPlugins: [remarkGfm],
+        rehypePlugins: [rehypeSlug]
+      }
+    },
+    components: {
+      a: ({ href, children, ...props }) => {
+        const external = typeof href === "string" && /^https?:\/\//.test(href);
+        return (
+          <a
+            href={href}
+            {...props}
+            target={external ? "_blank" : undefined}
+            rel={external ? "noopener noreferrer" : undefined}
+          >
+            {children}
+          </a>
+        );
+      }
+    }
+  });
+
+  return content;
+}
+
+export const getBlogEntries = cache(async (): Promise<BlogEntry[]> => {
+  const posts = await getAllBlogPosts();
+
+  return Promise.all(
+    posts.map(async (post): Promise<BlogEntry> => ({
+      id: post.slug,
+      name: post.frontmatter.title,
+      summary: post.frontmatter.description,
+      body: await renderPostBody(post),
+      publishedAt: post.frontmatter.publishedAt,
+      updatedAt: post.frontmatter.updatedAt,
+      author: post.frontmatter.author,
+      authorRole: post.frontmatter.authorRole,
+      authorImage: post.frontmatter.authorImage,
+      readingMinutes: post.readingMinutes,
+      headings: post.headings
+    }))
+  );
 });

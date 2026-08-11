@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import Home from "@/app/page";
+import Home from "@/components/home";
 import { notFound } from "next/navigation";
 import { projects, projectsById } from "@/lib/projects";
+import { getBlogEntries } from "@/lib/blog";
 import { toCanonicalUrl } from "@/lib/seo";
 import { getPrimaryImage } from "@/lib/entry-images";
 
@@ -58,9 +59,11 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
+  const blogEntries = await getBlogEntries();
+
   return (
     <div data-vaul-drawer-wrapper>
-      <Home initialProjectId={project.id} standaloneProjectRoute />
+      <Home initialProjectId={project.id} standaloneProjectRoute blogEntries={blogEntries} />
     </div>
   );
 }
