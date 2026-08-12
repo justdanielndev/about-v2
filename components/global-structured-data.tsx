@@ -57,7 +57,7 @@ const DANIEL_AVATAR_URL = toCanonicalUrl("/daniel-negre.png");
 const DANIEL_AVATAR_CAPTION = getImageCaption("/daniel-negre.png");
 
 const PERSON_ID = `${CANONICAL_ORIGIN}/#person`;
-const NIX_ID = `${CANONICAL_ORIGIN}/#nix-entertainment`;
+const NIX_ID = "https://nixentertainment.com/#organization";
 
 const NIX_LOGO_SRC = "/nix-rebrand-logo.png";
 const NIX_LOGO_URL = toCanonicalUrl(NIX_LOGO_SRC);
