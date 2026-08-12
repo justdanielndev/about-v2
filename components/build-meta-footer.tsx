@@ -60,24 +60,30 @@ export default function BuildMetaFooter() {
   }, []);
 
   const buildMetaLabel = useMemo(() => {
-    const commitLabel = meta?.latestCommitNumber
+    if (!meta || (!meta.latestCommitNumber && !meta.latestCommitSha)) {
+      return null;
+    }
+
+    const commitLabel = meta.latestCommitNumber
       ? meta.latestCommitSha
         ? `Commit #${meta.latestCommitNumber} (${meta.latestCommitSha})`
         : `Commit #${meta.latestCommitNumber}`
-      : meta?.latestCommitSha
-        ? `Commit ${meta.latestCommitSha}`
-        : "Commit unknown";
+      : `Commit ${meta.latestCommitSha}`;
 
-    const commitUrl = meta?.latestCommitSha
+    const commitUrl = meta.latestCommitSha
       ? `${meta.repoUrl}/commit/${meta.latestCommitSha}`
-      : `${meta?.repoUrl ?? `https://github.com/${encodeURIComponent(GITHUB_USER)}/${encodeURIComponent(GITHUB_REPO)}`}/commits`;
+      : `${meta.repoUrl}/commits`;
 
     return {
       commitLabel,
       commitUrl,
-      updatedLabel: `Updated ${formatTimestampLabel(meta?.latestCommitAt ?? null)}`
+      updatedLabel: `Updated ${formatTimestampLabel(meta.latestCommitAt)}`
     };
   }, [meta]);
+
+  if (!buildMetaLabel) {
+    return null;
+  }
 
   return (
     <footer className="site-build-meta" aria-label="Build info">
