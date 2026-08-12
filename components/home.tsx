@@ -1736,7 +1736,7 @@ export default function Home({
             <a
               key={entry.id}
               href={`/blog/${entry.id}`}
-              title={`${entry.name} — ${entry.summary}`}
+              title={`${entry.name} | ${entry.summary}`}
               className="site-project-row"
               ref={(node) => {
                 blogRowRefs.current[index] = node;
