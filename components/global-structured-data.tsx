@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { DEFAULT_NAME } from "@/lib/name-resolution";
-import { CANONICAL_ORIGIN, toCanonicalUrl } from "@/lib/seo";
+import { CANONICAL_HOME_URL, CANONICAL_ORIGIN, toCanonicalUrl } from "@/lib/seo";
 import { projects, projectsById } from "@/lib/projects";
 import { works, workById } from "@/lib/work";
 import { getEntryImagesWithCaptions, getPrimaryImage, getImageCaption } from "@/lib/entry-images";
@@ -56,8 +56,17 @@ function getMainEntityId(pathname: string): string | undefined {
 const DANIEL_AVATAR_URL = toCanonicalUrl("/daniel-negre.png");
 const DANIEL_AVATAR_CAPTION = getImageCaption("/daniel-negre.png");
 
+const PERSON_ID = `${CANONICAL_ORIGIN}/#person`;
+const NIX_ID = `${CANONICAL_ORIGIN}/#nix-entertainment`;
+
+const NIX_LOGO_SRC = "/nix-rebrand-logo.png";
+const NIX_LOGO_URL = toCanonicalUrl(NIX_LOGO_SRC);
+const NIX_LOGO_CAPTION = getImageCaption(NIX_LOGO_SRC);
+
+const PROFILE_CREATED_DATE = "2026-02-20";
+
 function getBreadcrumbList(pathname: string): Record<string, unknown> | undefined {
-  const homeCrumb = { "@type": "ListItem", position: 1, name: DEFAULT_NAME, item: CANONICAL_ORIGIN };
+  const homeCrumb = { "@type": "ListItem", position: 1, name: DEFAULT_NAME, item: CANONICAL_HOME_URL };
 
   if (pathname.startsWith("/project/")) {
     const project = projectsById[pathname.slice("/project/".length)];
@@ -120,8 +129,13 @@ function getPrimaryImageObject(pathname: string): Record<string, unknown> | unde
   };
 }
 
-export default function GlobalStructuredData() {
+type GlobalStructuredDataProps = {
+  lastCommitDate?: string | null;
+};
+
+export default function GlobalStructuredData({ lastCommitDate }: GlobalStructuredDataProps) {
   const pathname = usePathname() || "/";
+  const isHome = pathname === "/";
   const canonicalUrl = toCanonicalUrl(pathname);
   const primaryImageOfPage = getPrimaryImageObject(pathname);
   const breadcrumbList = getBreadcrumbList(pathname);
@@ -140,7 +154,7 @@ export default function GlobalStructuredData() {
       genre: project.type,
       dateCreated: resolveYear(project.year),
       url: toCanonicalUrl(`/project/${project.id}`),
-      creator: { "@id": `${CANONICAL_ORIGIN}/#person` },
+      creator: { "@id": PERSON_ID },
       image: toImageObjects(getEntryImagesWithCaptions(project))
     }));
 
@@ -154,7 +168,7 @@ export default function GlobalStructuredData() {
       genre: work.type,
       dateCreated: resolveYear(work.year),
       url: toCanonicalUrl(`/work/${work.id}`),
-      creator: { "@id": `${CANONICAL_ORIGIN}/#person` },
+      creator: { "@id": PERSON_ID },
       image: toImageObjects(getEntryImagesWithCaptions(work))
     }));
 
@@ -163,9 +177,53 @@ export default function GlobalStructuredData() {
     "@graph": [
       {
         "@type": "Person",
-        "@id": `${CANONICAL_ORIGIN}/#person`,
+        "@id": PERSON_ID,
         name: DEFAULT_NAME,
-        url: CANONICAL_ORIGIN,
+        url: CANONICAL_HOME_URL,
+        jobTitle: "Founder & Chief Director, Nix Entertainment",
+        description:
+          "Daniel Negre is a developer, director, and writer from Valencia, Spain, and the founder and Chief Director of Nix Entertainment.",
+        email: "daniel@negrenavarro.me",
+        nationality: {
+          "@type": "Country",
+          name: "Spain"
+        },
+        homeLocation: {
+          "@type": "Place",
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Valencia",
+            addressRegion: "Valencian Community",
+            addressCountry: "ES"
+          }
+        },
+        worksFor: { "@id": NIX_ID },
+        hasOccupation: [
+          { "@type": "Occupation", name: "Animation Director" },
+          { "@type": "Occupation", name: "Writer" },
+          { "@type": "Occupation", name: "Software Developer" },
+          { "@type": "Occupation", name: "Technical Researcher"}
+        ],
+        knowsAbout: [
+          "JavaScript",
+          "TypeScript",
+          "Next.js",
+          "Node.js",
+          "Expo",
+          "Python",
+          "Docker",
+          "Coolify",
+          "Self-hosting and homelab infrastructure",
+          "Artificial intelligence",
+          "Animation direction",
+          "Screenwriting",
+          "Character design",
+          "Branding and visual design"
+        ],
+        award: [
+          "First prize, goCalp innovation competition (Global Omnium, 2024)",
+          "Selected finalist, The Challenge (EduCaixa, 2025)"
+        ],
         sameAs: [
           "https://www.linkedin.com/in/daniel-negre/",
           "https://github.com/justdanielndev",
@@ -179,16 +237,30 @@ export default function GlobalStructuredData() {
         }
       },
       {
-        "@type": "WebSite",
-        "@id": `${CANONICAL_ORIGIN}/#website`,
-        url: CANONICAL_ORIGIN,
-        name: `${DEFAULT_NAME} (Portfolio)`,
-        publisher: {
-          "@id": `${CANONICAL_ORIGIN}/#person`
+        "@type": "Organization",
+        "@id": NIX_ID,
+        name: "Nix Entertainment",
+        url: "https://nixentertainment.com",
+        description: "Indie media group focused on webcomics and animated shows.",
+        founder: { "@id": PERSON_ID },
+        logo: {
+          "@type": "ImageObject",
+          url: NIX_LOGO_URL,
+          contentUrl: NIX_LOGO_URL,
+          ...(NIX_LOGO_CAPTION ? { caption: NIX_LOGO_CAPTION } : {})
         }
       },
       {
-        "@type": "WebPage",
+        "@type": "WebSite",
+        "@id": `${CANONICAL_ORIGIN}/#website`,
+        url: CANONICAL_HOME_URL,
+        name: `${DEFAULT_NAME} (Portfolio)`,
+        publisher: {
+          "@id": PERSON_ID
+        }
+      },
+      {
+        "@type": isHome ? "ProfilePage" : "WebPage",
         "@id": `${canonicalUrl}#webpage`,
         url: canonicalUrl,
         name: getPageName(pathname),
@@ -196,9 +268,12 @@ export default function GlobalStructuredData() {
           "@id": `${CANONICAL_ORIGIN}/#website`
         },
         about: {
-          "@id": `${CANONICAL_ORIGIN}/#person`
+          "@id": PERSON_ID
         },
-        ...(mainEntityId ? { mainEntity: { "@id": mainEntityId } } : {}),
+        ...(isHome ? { dateCreated: PROFILE_CREATED_DATE } : {}),
+        ...(isHome && lastCommitDate ? { dateModified: lastCommitDate } : {}),
+        ...(isHome ? { mainEntity: { "@id": PERSON_ID } } : {}),
+        ...(!isHome && mainEntityId ? { mainEntity: { "@id": mainEntityId } } : {}),
         ...(primaryImageOfPage ? { primaryImageOfPage } : {})
       },
       ...(breadcrumbList ? [breadcrumbList] : []),

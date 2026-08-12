@@ -22,3 +22,5 @@ export function toCanonicalUrl(pathname: string): string {
   const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
   return new URL(normalizedPath, CANONICAL_ORIGIN).toString();
 }
+
+export const CANONICAL_HOME_URL = toCanonicalUrl("/");

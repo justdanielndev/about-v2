@@ -1807,13 +1807,16 @@ export default function Home({
                 />
               ) : null}
               <section className="project-page">
-                <button
-                  type="button"
+                <a
+                  href="/"
                   className="project-page-link project-page-link-button project-page-link-top"
-                  onClick={closeProjectPage}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    closeProjectPage();
+                  }}
                 >
                   {"<"} Go back home
-                </button>
+                </a>
                 {activeEntryIsBlog && currentBlogEntry && currentBlogEntry.headings.length > 0 ? (
                   <TableOfContents headings={currentBlogEntry.headings} />
                 ) : null}

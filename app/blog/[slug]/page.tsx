@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Home from "@/components/home";
 import { notFound } from "next/navigation";
 import { getBlogEntries, getBlogPostBySlug, getBlogPostSlugs } from "@/lib/blog";
-import { toCanonicalUrl, CANONICAL_ORIGIN } from "@/lib/seo";
+import { toCanonicalUrl, CANONICAL_HOME_URL } from "@/lib/seo";
 import { DEFAULT_NAME } from "@/lib/name-resolution";
 
 type Params = {
@@ -31,7 +31,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${post.frontmatter.title} | Blog`,
+    title: `${post.frontmatter.title} | ${DEFAULT_NAME} Blog`,
     description: post.frontmatter.description,
     alternates: {
       canonical: `/blog/${post.slug}`
@@ -39,7 +39,11 @@ export async function generateMetadata({
     openGraph: {
       title: post.frontmatter.title,
       description: post.frontmatter.description,
-      type: "article"
+      type: "article",
+      url: toCanonicalUrl(`/blog/${post.slug}`),
+      publishedTime: post.frontmatter.publishedAt,
+      modifiedTime: post.frontmatter.updatedAt,
+      authors: [post.frontmatter.author]
     },
     twitter: {
       card: "summary_large_image",
@@ -77,7 +81,7 @@ export default async function BlogPostPage({
     author: {
       "@type": "Person",
       name: post.frontmatter.author,
-      ...(isDefaultAuthor ? { url: CANONICAL_ORIGIN } : {}),
+      ...(isDefaultAuthor ? { url: CANONICAL_HOME_URL } : {}),
       ...(post.frontmatter.authorImage ? { image: toCanonicalUrl(post.frontmatter.authorImage) } : {})
     },
     mainEntityOfPage: canonicalUrl,
@@ -87,7 +91,7 @@ export default async function BlogPostPage({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: DEFAULT_NAME, item: CANONICAL_ORIGIN },
+      { "@type": "ListItem", position: 1, name: DEFAULT_NAME, item: CANONICAL_HOME_URL },
       { "@type": "ListItem", position: 2, name: `${DEFAULT_NAME} Blog`, item: toCanonicalUrl("/blog") },
       { "@type": "ListItem", position: 3, name: post.frontmatter.title }
     ]
