@@ -87,6 +87,10 @@ html {
   transition: opacity 150ms var(--ease-smooth);
 }
 
+.custom-cursor-arrow {
+  will-change: transform;
+}
+
 @media (hover: hover) and (pointer: fine) {
   html.custom-cursor-active,
   html.custom-cursor-active * {
