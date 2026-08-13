@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { computeFingerprint } from "@/lib/cursorboard/fingerprint";
-import type { BoardLimits, BoardMessage, PeerPresence, ServerEvent } from "@/lib/cursorboard/types";
+import { PeerInterpolator } from "@/lib/cursorboard/interpolation";
+import type { BoardLimits, BoardMessage, PeerIdentity, ServerEvent } from "@/lib/cursorboard/types";
 
 type Status = "idle" | "connecting" | "open" | "closed";
 
@@ -19,8 +20,10 @@ export function useCursorboard(serverUrl: string | undefined, enabled: boolean) 
   const [selfId, setSelfId] = useState<string | null>(null);
   const [selfColor, setSelfColor] = useState<string | null>(null);
   const [error, setError] = useState<BoardError | null>(null);
-  const [peers, setPeers] = useState<Map<string, PeerPresence>>(new Map());
+  const [peers, setPeers] = useState<Map<number, PeerIdentity>>(new Map());
 
+  const interpolatorsRef = useRef<Map<number, PeerInterpolator>>(new Map());
+  const selfSlotRef = useRef<number | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const attemptRef = useRef(0);
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,29 +124,89 @@ export function useCursorboard(serverUrl: string | undefined, enabled: boolean) 
             setMessages((current) => current.filter((message) => !removed.has(message.id)));
             break;
           }
-          case "presence-batch":
-            setPeers(new Map(payload.entries.map((entry) => [entry.id, entry])));
+          case "presence-init": {
+            const arrival = performance.now();
+            selfSlotRef.current = payload.slot;
+            const interpolators = new Map<number, PeerInterpolator>();
+            for (const peer of payload.peers) {
+              if (peer.x === null || peer.y === null) {
+                continue;
+              }
+              const interpolator = new PeerInterpolator();
+              interpolator.push(peer.x, peer.y, arrival);
+              interpolators.set(peer.slot, interpolator);
+            }
+            interpolatorsRef.current = interpolators;
+            setPeers(
+              new Map(
+                payload.peers.map((peer) => [
+                  peer.slot,
+                  { slot: peer.slot, id: peer.id, color: peer.color, typing: peer.typing },
+                ])
+              )
+            );
             break;
-          case "presence":
+          }
+          case "presence-join":
             setPeers((current) => {
               const next = new Map(current);
-              next.set(payload.id, {
+              next.set(payload.slot, {
+                slot: payload.slot,
                 id: payload.id,
                 color: payload.color,
-                xRatio: payload.xRatio,
-                yRatio: payload.yRatio,
-                typing: payload.typing,
+                typing: false,
               });
               return next;
             });
             break;
-          case "presence-clear":
+          case "presence": {
+            const arrival = performance.now();
+            const typingChanges: Array<[number, boolean]> = [];
+
+            for (const [slot, x, y, typing] of payload.u) {
+              if (slot === selfSlotRef.current) {
+                continue;
+              }
+              let interpolator = interpolatorsRef.current.get(slot);
+              if (!interpolator) {
+                interpolator = new PeerInterpolator();
+                interpolatorsRef.current.set(slot, interpolator);
+              }
+              interpolator.push(x, y, arrival);
+              typingChanges.push([slot, typing === 1]);
+            }
+
             setPeers((current) => {
-              if (!current.has(payload.id)) {
+              let changed = false;
+              for (const [slot, typing] of typingChanges) {
+                const existing = current.get(slot);
+                if (existing && existing.typing !== typing) {
+                  changed = true;
+                  break;
+                }
+              }
+              if (!changed) {
                 return current;
               }
               const next = new Map(current);
-              next.delete(payload.id);
+              for (const [slot, typing] of typingChanges) {
+                const existing = next.get(slot);
+                if (existing && existing.typing !== typing) {
+                  next.set(slot, { ...existing, typing });
+                }
+              }
+              return next;
+            });
+            break;
+          }
+          case "presence-leave":
+            interpolatorsRef.current.delete(payload.slot);
+            setPeers((current) => {
+              if (!current.has(payload.slot)) {
+                return current;
+              }
+              const next = new Map(current);
+              next.delete(payload.slot);
               return next;
             });
             break;
@@ -160,6 +223,8 @@ export function useCursorboard(serverUrl: string | undefined, enabled: boolean) 
           socketRef.current = null;
         }
         setStatus("closed");
+        interpolatorsRef.current.clear();
+        selfSlotRef.current = null;
         setPeers(new Map());
         scheduleReconnect();
       });
@@ -212,13 +277,20 @@ export function useCursorboard(serverUrl: string | undefined, enabled: boolean) 
   );
 
   const unsubscribe = useCallback(() => {
+    interpolatorsRef.current.clear();
+    selfSlotRef.current = null;
     setPeers(new Map());
     send({ t: "unsubscribe" });
   }, [send]);
 
   const sendPresence = useCallback(
-    (input: { xRatio: number; yRatio: number; typing: boolean }) => {
-      send({ t: "presence", ...input });
+    (input: { x: number; y: number; typing: boolean }) => {
+      send({
+        t: "presence",
+        x: Math.round(input.x * 10_000) / 10_000,
+        y: Math.round(input.y * 10_000) / 10_000,
+        typing: input.typing,
+      });
     },
     [send]
   );
@@ -240,6 +312,7 @@ export function useCursorboard(serverUrl: string | undefined, enabled: boolean) 
     selfColor,
     ownMessageId,
     peers: peerList,
+    interpolators: interpolatorsRef,
     error,
     place,
     clearOwn,

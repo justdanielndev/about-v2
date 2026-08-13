@@ -18,7 +18,13 @@ const ANCHOR_SELECTORS = ["main", ".site-root-content", "body"];
 const RATIO_MIN = -1;
 const RATIO_MAX = 2;
 
+const PRESENCE_SEND_INTERVAL_MS = 50;
+const PRESENCE_DEADBAND = 0.0004;
+const OVERLAP_CHECK_INTERVAL_MS = 100;
+
 type Point = { x: number; y: number };
+
+const bound = (value: number) => Math.min(RATIO_MAX, Math.max(RATIO_MIN, value));
 
 function useIsDesktopPointer() {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -98,7 +104,6 @@ export default function CursorBoard() {
   const [boardOpen, setBoardOpen] = useState(false);
   const [renderNotes, setRenderNotes] = useState(false);
   const [draft, setDraft] = useState("");
-  const [cursor, setCursor] = useState<Point>({ x: 0, y: 0 });
   const [showHint, setShowHint] = useState(false);
   const [inputWidth, setInputWidth] = useState(MIN_INPUT_WIDTH);
   const [composerCoversNote, setComposerCoversNote] = useState(false);
@@ -108,6 +113,14 @@ export default function CursorBoard() {
   const sizerRef = useRef<HTMLSpanElement | null>(null);
   const composerRef = useRef<HTMLDivElement | null>(null);
   const noteElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const peerElementsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  const mouseRef = useRef<Point>({ x: 0, y: 0 });
+  const draftRef = useRef("");
+  const layerSizeRef = useRef({ width: 0, height: 0 });
+  const lastPresenceAtRef = useRef(0);
+  const lastPresenceRef = useRef<{ x: number; y: number; typing: boolean } | null>(null);
+  const lastOverlapCheckRef = useRef(0);
 
   const enabled = mounted && isDesktop && Boolean(serverUrl);
 
@@ -127,6 +140,7 @@ export default function CursorBoard() {
     selfId,
     selfColor,
     peers,
+    interpolators,
     error,
     place,
     subscribe,
@@ -136,6 +150,10 @@ export default function CursorBoard() {
   } = useCursorboard(serverUrl, enabled);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   const visibleMessages = useMemo(
     () => messages.filter((message) => message.path === currentPath),
@@ -212,89 +230,92 @@ export default function CursorBoard() {
     if (!enabled) {
       return;
     }
-
-    let frame = 0;
-    let latest: Point = { x: 0, y: 0 };
-
     const handleMove = (event: MouseEvent) => {
-      latest = { x: event.clientX, y: event.clientY };
-      if (frame === 0) {
-        frame = requestAnimationFrame(() => {
-          frame = 0;
-          setCursor(latest);
-        });
-      }
+      mouseRef.current = { x: event.clientX, y: event.clientY };
     };
-
     document.addEventListener("mousemove", handleMove);
-    return () => {
-      document.removeEventListener("mousemove", handleMove);
-      if (frame !== 0) {
-        cancelAnimationFrame(frame);
-      }
-    };
+    return () => document.removeEventListener("mousemove", handleMove);
   }, [enabled]);
 
   useEffect(() => {
-    if (!boardOpen) {
+    if (!enabled || !anchor) {
       return;
     }
-
-    let frame = 0;
-    const onScroll = () => {
-      if (frame === 0) {
-        frame = requestAnimationFrame(() => {
-          frame = 0;
-          updateComposerOverlap();
-        });
-      }
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (frame !== 0) {
-        cancelAnimationFrame(frame);
-      }
-    };
-  }, [boardOpen, updateComposerOverlap]);
-
-  useEffect(() => {
-    if (boardOpen) {
-      updateComposerOverlap();
-    }
-  }, [cursor, boardOpen, visibleMessages, updateComposerOverlap]);
-
-  const lastPresenceSentRef = useRef(0);
-  useEffect(() => {
-    if (!boardOpen) {
-      return;
-    }
-
     const overlay = overlayRef.current;
     if (!overlay) {
       return;
     }
 
-    const now = Date.now();
-    if (now - lastPresenceSentRef.current < 50) {
+    const measure = () => {
+      layerSizeRef.current = { width: overlay.offsetWidth, height: overlay.offsetHeight };
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(overlay);
+    return () => observer.disconnect();
+  }, [enabled, anchor, renderNotes]);
+
+  useEffect(() => {
+    if (!enabled || !boardOpen) {
       return;
     }
-    lastPresenceSentRef.current = now;
 
-    const rect = overlay.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) {
-      return;
-    }
+    let frame = 0;
 
-    const bound = (value: number) => Math.min(RATIO_MAX, Math.max(RATIO_MIN, value));
+    const tick = () => {
+      frame = requestAnimationFrame(tick);
+      const now = performance.now();
 
-    sendPresence({
-      xRatio: bound((cursor.x - rect.left) / rect.width),
-      yRatio: bound((cursor.y - rect.top) / rect.height),
-      typing: draft.length > 0,
-    });
-  }, [cursor, draft, boardOpen, sendPresence]);
+      const composer = composerRef.current;
+      if (composer) {
+        composer.style.transform = `translate3d(${mouseRef.current.x}px, ${mouseRef.current.y}px, 0)`;
+      }
+
+      const { width, height } = layerSizeRef.current;
+      if (width > 0 && height > 0) {
+        for (const [slot, element] of peerElementsRef.current) {
+          const position = interpolators.current.get(slot)?.sample(now);
+          if (position) {
+            element.style.transform = `translate3d(${position.x * width}px, ${position.y * height}px, 0)`;
+            element.style.opacity = "1";
+          }
+        }
+      }
+
+      if (now - lastPresenceAtRef.current >= PRESENCE_SEND_INTERVAL_MS) {
+        const overlay = overlayRef.current;
+        if (overlay) {
+          const rect = overlay.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            const x = bound((mouseRef.current.x - rect.left) / rect.width);
+            const y = bound((mouseRef.current.y - rect.top) / rect.height);
+            const typing = draftRef.current.length > 0;
+            const last = lastPresenceRef.current;
+            const moved =
+              !last ||
+              last.typing !== typing ||
+              Math.abs(x - last.x) > PRESENCE_DEADBAND ||
+              Math.abs(y - last.y) > PRESENCE_DEADBAND;
+
+            if (moved) {
+              lastPresenceAtRef.current = now;
+              lastPresenceRef.current = { x, y, typing };
+              sendPresence({ x, y, typing });
+            }
+          }
+        }
+      }
+
+      if (now - lastOverlapCheckRef.current >= OVERLAP_CHECK_INTERVAL_MS) {
+        lastOverlapCheckRef.current = now;
+        updateComposerOverlap();
+      }
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [enabled, boardOpen, interpolators, sendPresence, updateComposerOverlap]);
 
   useEffect(() => {
     if (!error) {
@@ -326,8 +347,6 @@ export default function CursorBoard() {
     if (overlayRect.width === 0 || overlayRect.height === 0) {
       return;
     }
-
-    const bound = (value: number) => Math.min(RATIO_MAX, Math.max(RATIO_MIN, value));
 
     const sent = place({
       text,
@@ -443,9 +462,21 @@ export default function CursorBoard() {
           {renderNotes &&
             peers.map((peer) => (
               <div
-                key={peer.id}
+                key={peer.slot}
+                ref={(element) => {
+                  if (element) {
+                    peerElementsRef.current.set(peer.slot, element);
+                    const position = interpolators.current.get(peer.slot)?.peek();
+                    const { width, height } = layerSizeRef.current;
+                    if (position && width > 0 && height > 0) {
+                      element.style.transform = `translate3d(${position.x * width}px, ${position.y * height}px, 0)`;
+                      element.style.opacity = "1";
+                    }
+                  } else {
+                    peerElementsRef.current.delete(peer.slot);
+                  }
+                }}
                 className="cursorboard-peer"
-                style={{ left: `${peer.xRatio * 100}%`, top: `${peer.yRatio * 100}%` }}
               >
                 <svg
                   className="cursorboard-peer-arrow"
@@ -488,10 +519,14 @@ export default function CursorBoard() {
               }}
             >
               <div
-                ref={composerRef}
+                ref={(element) => {
+                  composerRef.current = element;
+                  if (element) {
+                    element.style.transform = `translate3d(${mouseRef.current.x}px, ${mouseRef.current.y}px, 0)`;
+                  }
+                }}
                 className={`cursorboard-composer${composerCoversNote ? " is-faded" : ""}`}
                 style={{
-                  transform: `translate(${cursor.x}px, ${cursor.y}px)`,
                   background: composerColor,
                   color: readableTextColor(composerColor),
                 }}
@@ -521,12 +556,6 @@ export default function CursorBoard() {
           ) : null}
 
           {error ? <div className="cursorboard-toast">{error.message}</div> : null}
-
-          {showHint && !boardOpen ? (
-            <button type="button" className="cursorboard-hint" onClick={dismissHint}>
-              Press <kbd>/</kbd> to see and leave messages
-            </button>
-          ) : null}
         </>,
         document.body
       )}
