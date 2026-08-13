@@ -179,6 +179,7 @@ export default function GlobalStructuredData({ lastCommitDate }: GlobalStructure
         "@type": "Person",
         "@id": PERSON_ID,
         name: DEFAULT_NAME,
+        alternateName: "Daniel Negre Navarro",
         url: CANONICAL_HOME_URL,
         jobTitle: "Founder & Chief Director, Nix Entertainment",
         description:
