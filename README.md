@@ -2,6 +2,12 @@
 
 This is my personal about page. It's built with Next.js.
 
+## Cool Features Highlight
+
+- Polaroid images when hovering on projects
+- Press `/` to open interactive cursor chat (CursorBoard)
+- More :D
+
 ## Pages
 
 - Homepage
