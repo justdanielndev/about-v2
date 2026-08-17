@@ -13,6 +13,7 @@ import { getImageCaption } from "@/lib/entry-images";
 import type { BlogEntry } from "@/lib/blog";
 import TableOfContents from "@/app/blog/_components/table-of-contents";
 import BlogPostAnalytics from "@/app/blog/_components/blog-post-analytics";
+import blogStyles from "@/app/blog/blog.module.css";
 
 type RowHighlight = {
   top: number;
@@ -85,6 +86,9 @@ function polaroidsEnabled(): boolean {
 }
 
 const POLAROID_LAYER_HEIGHT = 340;
+const GALLERY_PULL_FACTOR = 0.06;
+const GALLERY_PULL_LIMIT = 3.5;
+const GALLERY_PULL_RADIUS = 220;
 
 const hiddenStyle = "cloneReveal cloneHidden";
 const shownStyle = "cloneReveal cloneShown";
@@ -257,6 +261,9 @@ export default function Home({
   const polaroidKeyRef = useRef(0);
   const projectPolaroidCardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const workPolaroidCardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const galleryCardRefs = useRef<Array<HTMLElement | null>>([]);
+  const galleryPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const galleryPullFrameRef = useRef<number | null>(null);
   const lastfmTriggerRef = useRef<HTMLButtonElement | null>(null);
   const lastfmCloseTimer = useRef<number | null>(null);
   const linkedinTriggerRef = useRef<HTMLElement | null>(null);
@@ -445,6 +452,14 @@ export default function Home({
       window.clearTimeout(safetyTimer);
     };
   }, [standaloneProjectRoute]);
+
+  useEffect(() => {
+    return () => {
+      if (galleryPullFrameRef.current !== null) {
+        window.cancelAnimationFrame(galleryPullFrameRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!polaroidsEnabled()) {
@@ -688,7 +703,8 @@ export default function Home({
       return;
     }
 
-    const pics = items[index].polaroids ?? [];
+    const isCurrentlyOpenGallery = activeProjectId === items[index].id && items[index].polaroidGallery;
+    const pics = isCurrentlyOpenGallery ? [] : (items[index].polaroids ?? []);
     const spacing = POLAROID_SPACING_BY_PROJECT[items[index].id] ?? POLAROID_SPACING;
     polaroidKeyRef.current += 1;
 
@@ -1470,7 +1486,13 @@ export default function Home({
   const currentNonBlogProject = activeProjectId && !activeEntryIsBlog
     ? (projectsById[activeProjectId] ?? workById[activeProjectId] ?? null)
     : null;
-  const currentProject: { name: string; summary: string; polaroids?: string[] } | null = currentNonBlogProject ?? currentBlogEntry;
+  const currentProject: {
+    name: string;
+    summary: string;
+    polaroids?: string[];
+    polaroidGallery?: boolean;
+    polaroidGalleryOffsets?: Record<string, number>;
+  } | null = currentNonBlogProject ?? currentBlogEntry;
   const homeTabActive = !activeProjectId && visualTopTab === "home";
   const blogTabActive = !activeProjectId && visualTopTab === "blog";
   const voidTabActive = !activeProjectId && visualTopTab === "void";
@@ -1510,6 +1532,66 @@ export default function Home({
 
     const pull = Math.max(-3.5, Math.min(3.5, outsideDelta * 0.06));
     setTabPull(pull);
+  };
+
+  const applyGalleryPull = () => {
+    galleryPullFrameRef.current = null;
+    const pointer = galleryPointerRef.current;
+    const cards = galleryCardRefs.current.filter((card): card is HTMLElement => card !== null);
+
+    if (!pointer) {
+      for (const card of cards) {
+        card.style.removeProperty("--gallery-pull-x");
+      }
+      return;
+    }
+
+    const offsetParent = cards[0]?.offsetParent;
+    if (!offsetParent) {
+      return;
+    }
+
+    let footprintLeft = Infinity;
+    let footprintRight = -Infinity;
+    for (const card of cards) {
+      footprintLeft = Math.min(footprintLeft, card.offsetLeft);
+      footprintRight = Math.max(footprintRight, card.offsetLeft + card.offsetWidth);
+    }
+
+    const pointerX = pointer.x - offsetParent.getBoundingClientRect().left;
+
+    for (const card of cards) {
+      const roomLeft = Math.min(GALLERY_PULL_LIMIT, card.offsetLeft - footprintLeft);
+      const roomRight = Math.min(GALLERY_PULL_LIMIT, footprintRight - (card.offsetLeft + card.offsetWidth));
+      const deltaX = pointerX - (card.offsetLeft + card.offsetWidth / 2);
+      const proximity = Math.max(0, 1 - Math.abs(deltaX) / GALLERY_PULL_RADIUS);
+      const desiredX = deltaX * GALLERY_PULL_FACTOR * proximity;
+      const pullX = Math.max(-roomLeft, Math.min(roomRight, desiredX));
+      card.style.setProperty("--gallery-pull-x", `${pullX}px`);
+    }
+  };
+
+  const queueGalleryPull = () => {
+    if (galleryPullFrameRef.current !== null) {
+      return;
+    }
+    galleryPullFrameRef.current = window.requestAnimationFrame(applyGalleryPull);
+  };
+
+  const handleGalleryMove = (event: MouseEvent<HTMLDivElement>) => {
+    if (!polaroidsEnabled() || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    galleryPointerRef.current = { x: event.clientX, y: event.clientY };
+    queueGalleryPull();
+  };
+
+  const handleGalleryLeave = () => {
+    if (galleryPointerRef.current === null) {
+      return;
+    }
+    galleryPointerRef.current = null;
+    queueGalleryPull();
   };
 
   const renderProjectsSection = () => (
@@ -1708,6 +1790,14 @@ export default function Home({
     return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(date);
   };
 
+  const formatBlogFullDate = (iso: string): string => {
+    const date = new Date(`${iso}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) {
+      return iso;
+    }
+    return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(date);
+  };
+
   const renderBlogSection = () => (
     <section className="site-projects">
       <h2 className="site-projects-title">Posts</h2>
@@ -1737,7 +1827,7 @@ export default function Home({
               key={entry.id}
               href={`/blog/${entry.id}`}
               title={`${entry.name} | ${entry.summary}`}
-              className="site-project-row"
+              className={`site-project-row ${blogStyles.blogRowLink}`}
               ref={(node) => {
                 blogRowRefs.current[index] = node;
               }}
@@ -1750,7 +1840,10 @@ export default function Home({
             >
               <span className="site-col-year">{entry.publishedAt.slice(0, 4)}</span>
               <span className="site-col-sep" aria-hidden="true"> </span>
-              <span className="site-col-name">{entry.name}</span>
+              <span className={`site-col-name ${blogStyles.blogNameColumn}`}>
+                <span className={blogStyles.blogPostTitle}>{entry.name}</span>
+                <span className={blogStyles.blogPostDescription}>{entry.summary}</span>
+              </span>
               <span className="site-col-type">{formatBlogPublishedDate(entry.publishedAt)}</span>
             </a>
             ))}
@@ -1817,10 +1910,14 @@ export default function Home({
                 >
                   {"<"} Go back home
                 </a>
-                {activeEntryIsBlog && currentBlogEntry && currentBlogEntry.headings.length > 0 ? (
-                  <TableOfContents headings={currentBlogEntry.headings} />
+                {activeEntryIsBlog && currentBlogEntry ? (
+                  <header className="blog-article-meta">
+                    <span>{formatBlogFullDate(currentBlogEntry.publishedAt)}</span>
+                    <span className="blog-article-meta-dot" aria-hidden="true">·</span>
+                    <span>{currentBlogEntry.readingMinutes} min read</span>
+                  </header>
                 ) : null}
-                <div className="project-page-content">
+                <div className={`project-page-content${activeEntryIsBlog ? " blog-prose" : ""}`}>
                   {activeEntryIsBlog && currentBlogEntry ? (
                     currentBlogEntry.body
                   ) : (
@@ -1834,6 +1931,34 @@ export default function Home({
                         <img key={src} src={src} alt={getImageCaption(src) ?? `${currentProject.name} photo`} />
                       ))}
                     </noscript>
+                  ) : null}
+                  {currentProject?.polaroidGallery && currentProject.polaroids && currentProject.polaroids.length > 0 ? (
+                    <div
+                      className="project-polaroid-gallery"
+                      onMouseMove={handleGalleryMove}
+                      onMouseLeave={handleGalleryLeave}
+                    >
+                      {currentProject.polaroids.map((src, index) => {
+                        const xOffset = currentProject.polaroidGalleryOffsets?.[src];
+                        return (
+                          <figure
+                            key={src}
+                            className="project-polaroid-gallery-item"
+                            ref={(node) => {
+                              galleryCardRefs.current[index] = node;
+                            }}
+                          >
+                            <img
+                              src={src}
+                              alt={getImageCaption(src) ?? `${currentProject.name} photo`}
+                              loading="lazy"
+                              draggable={false}
+                              style={xOffset !== undefined ? { objectPosition: `${xOffset}% center` } : undefined}
+                            />
+                          </figure>
+                        );
+                      })}
+                    </div>
                   ) : null}
                 </div>
               </section>
@@ -1926,7 +2051,7 @@ export default function Home({
                     Nix Entertainment
                   </a>
                   . We're a media group working on projects like{" "}
-                  <a href="https://nixentertainment.com/shadowborne-chronicles" title="Shadowborne Chronicles | Animated Series by Nix Entertainment" target="_blank">
+                  <a href="https://nixentertainment.com/shadowborne-chronicles" title="Shadowborne Chronicles | Animated Series by Nix Entertainment" target="_blank" rel="noopener">
                     <span className="shadowborne-wrap" style={{ pointerEvents: "none" }}>
                       <img src="/shadowborne.png" alt="Shadowborne Chronicles" className="bio-inline-logo bio-inline-logo-wide shadowborne-default" draggable={false} />
                       <img src="/shadowborne-white.png" alt="Shadowborne Chronicles" className="bio-inline-logo bio-inline-logo-wide shadowborne-white" draggable={false} aria-hidden="true" />
@@ -2102,6 +2227,10 @@ export default function Home({
         </div>
 
       </main>
+
+      {contentVisible && activeEntryIsBlog && currentBlogEntry && currentBlogEntry.headings.length > 0 ? (
+        <TableOfContents headings={currentBlogEntry.headings} />
+      ) : null}
 
       {hasOpenedLastfm && (
       <div

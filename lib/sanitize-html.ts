@@ -76,7 +76,9 @@ export function sanitizeProjectHtml(input: string): string {
       }
 
       if (el.getAttribute("target") === "_blank") {
-        el.setAttribute("rel", "noopener noreferrer");
+        const rel = (el.getAttribute("rel") ?? "").toLowerCase().split(/\s+/).filter(Boolean);
+        const keepReferrer = rel.includes("noopener") && !rel.includes("noreferrer");
+        el.setAttribute("rel", keepReferrer ? "noopener" : "noopener noreferrer");
       } else {
         el.removeAttribute("target");
         el.removeAttribute("rel");

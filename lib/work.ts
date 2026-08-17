@@ -10,6 +10,8 @@ export type ProjectEntry = {
   image?: string;
   ogImage?: string;
   polaroids?: string[];
+  polaroidGallery?: boolean;
+  polaroidGalleryOffsets?: Record<string, number>;
 };
 
 export const works: ProjectEntry[] = [
@@ -47,7 +49,7 @@ export const works: ProjectEntry[] = [
 <p>Zarka got rejected once in his childhood and never recovered from it. Now he wants control over everyone, so that can never happen again.</p>
 <br/>
 <p>These are not all characters in the series, though. While designs for the rest are not public yet, they're being polished as you read this page, and I can't wait to share them all.</p>
-<p>If you want to know more about Shadowborne Chronicles, check out the <a href="https://nixentertainment.com/shadowborne-chronicles" target="_blank">official website</a>!</p>`
+<p>If you want to know more about Shadowborne Chronicles, check out the <a href="https://nixentertainment.com/shadowborne-chronicles" target="_blank" rel="noopener">official website</a>!</p>`
   },
   {
     id: "new-nix",
@@ -66,7 +68,7 @@ export const works: ProjectEntry[] = [
 <p>After adding our brand gradient to this new shader, the logo finally looked way more dynamic and interesting, just like we wanted.</p>
 <p>Besides the better visual look, it gives us a way to change the logo's colors dynamically and even add animations without having to create multiple versions of it. Here are some examples of the logo in different scenarios:</p>
 <img src="/nix-glass-effect-examples.png" alt="Examples of the new logo in 2 different scenarios" class="project-banner" />
-<p>We also simplified our color palette and typography to go along with the new branding, and redesigned our website to reflect the new identity, which is available <a href="https://nixentertainment.com" target="_blank">here</a>.</p>
+<p>We also simplified our color palette and typography to go along with the new branding, and redesigned our website to reflect the new identity, which is available <a href="https://nixentertainment.com" target="_blank" rel="noopener">here</a>.</p>
 <p>Finally, we redesigned our social media banner to match our new look, now including Umbriel and Aria, the main characters of our animated series Shadowborne Chronicles.</p>
 <img src="/nix-entertainment-banner.jpg" alt="${getImageCaption("/nix-entertainment-banner.jpg")}" class="project-banner" />
 <p>We're very happy with the new branding, and hope it will accompany us for many years to come!</p>
@@ -84,7 +86,7 @@ export const works: ProjectEntry[] = [
 <p>After adding features for a while, it eventually became a full shell system that wraps your regular terminal and makes day-to-day usage a bit nicer.</p>
 <p>It adds custom smart autocompletion for commands and files (with argument support), a proper command history you can browse with your keyboard, colored outputs, and nice messages and styling.</p>
 <p>I was able to compile the same JS codebase into native binaries for macOS, Linux, and Windows on all chipsets, which meant the project was a success.</p>
-<p>Dimensity was mostly an experiment and I'm not planning to keep adding features to it, but it ended up being quite a fun tool. It's open source, so if you want to try it or see its code, it's available <a href="https://github.com/justdanielndev/dimensity-oss" target="_blank">here</a>!</p>`
+<p>Dimensity was mostly an experiment and I'm not planning to keep adding features to it, but it ended up being quite a fun tool. It's open source, so if you want to try it or see its code, it's available <a href="https://github.com/justdanielndev/dimensity-oss" target="_blank" rel="noopener noreferrer">here</a>!</p>`
   }
 ];
 

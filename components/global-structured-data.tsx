@@ -228,7 +228,8 @@ export default function GlobalStructuredData({ lastCommitDate }: GlobalStructure
         sameAs: [
           "https://www.linkedin.com/in/daniel-negre/",
           "https://github.com/justdanielndev",
-          "https://orcid.org/0009-0008-2507-2584"
+          "https://orcid.org/0009-0008-2507-2584",
+          "https://x.com/negredev"
         ],
         image: {
           "@type": "ImageObject",

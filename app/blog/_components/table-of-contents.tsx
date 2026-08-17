@@ -53,11 +53,16 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
   const [markerTop, setMarkerTop] = useState<number>(0);
   const [markerLeft, setMarkerLeft] = useState<number>(0);
   const [markerVisible, setMarkerVisible] = useState(false);
+  const [markerAnimated, setMarkerAnimated] = useState(false);
 
   const listRef = useRef<HTMLOListElement | null>(null);
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const scrollSettleTimerRef = useRef<number | null>(null);
   const targetIdRef = useRef<string | null>(null);
+  const activeIdRef = useRef<string | null>(activeId);
+  const hasPositionedRef = useRef(false);
+
+  activeIdRef.current = activeId;
 
   const updateMarker = (id: string | null) => {
     if (!id) {
@@ -78,6 +83,12 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     setMarkerTop(linkRect.top - rootRect.top + linkRect.height / 2);
     setMarkerLeft(linkRect.left - rootRect.left - 12);
     setMarkerVisible(true);
+
+    if (!hasPositionedRef.current) {
+      hasPositionedRef.current = true;
+      setMarkerAnimated(false);
+      requestAnimationFrame(() => setMarkerAnimated(true));
+    }
   };
 
   useEffect(() => {
@@ -136,6 +147,31 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [activeId]);
+
+  useEffect(() => {
+    const rootList = listRef.current;
+    if (!rootList) {
+      return;
+    }
+
+    const remeasure = () => updateMarker(activeIdRef.current);
+
+    const raf1 = requestAnimationFrame(() => {
+      requestAnimationFrame(remeasure);
+    });
+
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      document.fonts.ready.then(remeasure).catch(() => {});
+    }
+
+    const observer = new ResizeObserver(remeasure);
+    observer.observe(rootList);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -254,7 +290,7 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
         <h2>Contents</h2>
         <ol ref={listRef}>
           <span
-            className={styles.tocMarker}
+            className={`${styles.tocMarker} ${markerAnimated ? "" : styles.tocMarkerFadeOnly}`}
             style={{
               top: `${markerTop}px`,
               left: `${markerLeft}px`,

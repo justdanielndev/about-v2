@@ -60,6 +60,7 @@ const IMAGE_CAPTIONS: Record<string, string> = {
   "/gocalp-project-graph-present.jpg": "Daniel Negre presents his goCalp proposal using a biodiversity data graph.",
   "/gocalp-first-prize.jpg": "Daniel Negre receives the goCalp first-prize award from Global Omnium in Calpe.",
   "/gocalp-project-main-presentation.jpg": "Daniel Negre presents his goCalp garden-corridor proposal at the Global Omnium podium.",
+  "/gocalp3.jpg": "Daniel Negre presents the BioDiversiTeam green-corridor street render at the goCalp final.",
 
   "/shadowborne-chronicles-character-sheets.webp": "Banner showing Aria and Umbriel for Shadowborne Chronicles design info page",
   "/shadowborne-aria-concept.webp": "Aria's concept art for Nix Entertainment's Shadowborne Chronicles.",
