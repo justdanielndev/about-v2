@@ -2035,7 +2035,7 @@ export default function Home({
                   </div>
                 </div>
                 <p className="site-hero-desc">
-                  Hey there! <img src="/wave.png" alt="👋" className="site-hero-wave" draggable={false} /> I'm <b>{displayName}</b>, a director, writer, developer... Overall, I make projects that are designed to improve people's lives. Right now I'm working on an open source app update server called <img src="/pawprint.png" alt="Pawprint logo" className="bio-inline-logo bio-inline-nix" draggable={false} /><b>Pawprint</b>.
+                  Hey there! <img src="/wave.png" alt="👋" className="site-hero-wave" draggable={false} /> I'm <b>{displayName}</b>, a developer, designer, writer... Overall, I make projects that are designed to improve people's lives. Right now I'm building an ISP called <img src="/octea.png" alt="Octea logo" className="bio-inline-logo" draggable={false} /> with a team of amazing people.
                 </p>
                 <p className="site-hero-bio-p">
                   In addition to this, I am the Founder and Chief Director of<br/>{" "}
