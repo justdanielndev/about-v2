@@ -23,20 +23,20 @@ export const metadata: Metadata = {
   alternates: { canonical: CANONICAL_HOME_URL },
   robots: { index: true, follow: true },
   title: buildSiteTitle(defaultName),
-  description: "Daniel Negre is a developer, director, and writer from Valencia, Spain. Founder of Nix Entertainment.",
-  keywords: ["Daniel Negre", "portfolio", "developer", "director", "writer", "Valencia", "Nix Entertainment", "Spain"],
+  description: "Daniel Negre is a developer, designer, and writer from Valencia, Spain. Founder of Nix Entertainment.",
+  keywords: ["Daniel Negre", "portfolio", "developer", "director", "designer", "isp", "writer", "Valencia", "Nix Entertainment", "Spain"],
   openGraph: {
-    title: `${defaultName} | Developer, Director & Writer from Valencia`,
+    title: `${defaultName} | Developer, Designer & Writer from Valencia`,
     description: "Founder of Nix Entertainment. Portfolio of projects built from Valencia, Spain.",
     url: CANONICAL_HOME_URL,
     siteName: defaultName,
-    images: [{ url: "/link.png", width: 1200, height: 630, alt: `${defaultName} | Developer, Director & Writer` }],
+    images: [{ url: "/link.png", width: 1200, height: 630, alt: `${defaultName} | Developer, Designer & Writer` }],
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${defaultName} | Developer, Director & Writer`,
+    title: `${defaultName} | Developer, Designer & Writer`,
     description: "Founder of Nix Entertainment. Portfolio of projects spanning AI, games, infrastructure & animation.",
     images: ["/link.png"]
   }

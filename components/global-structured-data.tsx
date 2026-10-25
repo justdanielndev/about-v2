@@ -183,7 +183,7 @@ export default function GlobalStructuredData({ lastCommitDate }: GlobalStructure
         url: CANONICAL_HOME_URL,
         jobTitle: "Founder & Chief Director, Nix Entertainment",
         description:
-          "Daniel Negre is a developer, director, and writer from Valencia, Spain, and the founder and Chief Director of Nix Entertainment.",
+          "Daniel Negre is a developer, designer, and writer from Valencia, Spain, and the founder and Chief Director of Nix Entertainment.",
         email: "daniel@negrenavarro.me",
         nationality: {
           "@type": "Country",
@@ -201,6 +201,8 @@ export default function GlobalStructuredData({ lastCommitDate }: GlobalStructure
         worksFor: { "@id": NIX_ID },
         hasOccupation: [
           { "@type": "Occupation", name: "Animation Director" },
+          { "@type": "Occupation", name: "Brand Designer" },
+          { "@type": "Occupation", name: "Telecommunications Director" },
           { "@type": "Occupation", name: "Writer" },
           { "@type": "Occupation", name: "Software Developer" },
           { "@type": "Occupation", name: "Technical Researcher"}
